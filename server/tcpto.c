@@ -108,7 +108,6 @@ void tcp_to_control_can_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t 
     }
     else if(nread == UV_EOF) // has no data (means disconnected)
     {
-        // TODO 此处发生segment fault待修复
         log_printf(LOG_INFO, "Loss control connection from %s:%d.",
                         inet_ntoa(data->addr.sin_addr), htons(data->addr.sin_port));
 
@@ -117,14 +116,14 @@ void tcp_to_control_can_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t 
         uv_tcp_t** keys = (uv_tcp_t**)g_hash_table_get_keys_as_array(data->all_tcp, &length);
         for(guint i = 0; i < length; i++)
         {
-            uv_tcp_t* tcp_to_proxy = tcpmap_get(data->all_tcp, keys[i]);
+            uv_tcp_t* tcp_to_proxy = keys[i];
             data_proxy_t* data_proxy = tcp_to_proxy->data;
 
             /* disconnect */
-            uv_close((uv_handle_t*)(data_proxy->partner), free_self);
-            uv_close((uv_handle_t*)tcp_to_proxy, free_with_data);
             log_printf(LOG_INFO, "Disconnect proxy connection from %s:%d.",
                         inet_ntoa(data_proxy->addr.sin_addr), htons(data_proxy->addr.sin_port));
+            uv_close((uv_handle_t*)(data_proxy->partner), free_self);
+            uv_close((uv_handle_t*)tcp_to_proxy, free_with_data);
         }
         g_free(keys);
 
