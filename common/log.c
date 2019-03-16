@@ -91,12 +91,12 @@ void _log_printf(enum LogLevel level, const char* fmt, ...)
 
 static void log_info(const char* fmt, va_list args)
 {
-    fprintf(stdout, "[INFO]");
+    fprintf(stdout, "[INFO]    : ");
     vfprintf(stdout, fmt, args);
     fprintf(stdout, "\n");
     if(log_file != NULL)
     {
-        fprintf(log_file, "[INFO]");
+        fprintf(log_file, "[INFO]    : ");
         vfprintf(log_file, fmt, args);
         fprintf(log_file, "\n");
         fflush(log_file);
@@ -105,12 +105,12 @@ static void log_info(const char* fmt, va_list args)
 
 static void log_warning(const char* fmt, va_list args)
 {
-    fprintf(stdout, "[WARNING]");
+    fprintf(stdout, "[WARNING] : ");
     vfprintf(stdout, fmt, args);
     fprintf(stdout, "\n");
     if(log_file != NULL)
     {
-        fprintf(log_file, "[WARNING]");
+        fprintf(log_file, "[WARNING] : ");
         vfprintf(log_file, fmt, args);
         fprintf(log_file, "\n");
         fflush(log_file);
@@ -119,12 +119,12 @@ static void log_warning(const char* fmt, va_list args)
 
 static void log_error(const char* fmt, va_list args)
 {
-    fprintf(stderr, "[ERROR]");
+    fprintf(stderr, "[ERROR]   : ");
     vfprintf(stderr, fmt, args);
     fprintf(stderr, "\n");
     if(log_file != NULL)
     {
-        fprintf(log_file, "[ERROR]");
+        fprintf(log_file, "[ERROR]   : ");
         vfprintf(log_file, fmt, args);
         fprintf(log_file, "\n");
         fflush(log_file);

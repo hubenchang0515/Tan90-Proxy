@@ -41,7 +41,11 @@ void _log_printf(enum LogLevel level, const char* fmt, ...);
 void log_printf(enum LogLevel level, const char* fmt, ...);
 
 #ifndef log_printf
-#define log_printf(level, fmt, ...)  _log_printf(level, " <%s : %d> " fmt, __FILE__, __LINE__, ##__VA_ARGS__ )
+    #ifdef DEBUG
+        #define log_printf(level, fmt, ...)  _log_printf(level, " <%s : %d> " fmt, __FILE__, __LINE__, ##__VA_ARGS__ )
+    #else
+        #define log_printf(level, fmt, ...)  _log_printf(level, fmt, ##__VA_ARGS__ )
+    #endif
 #endif
 
 #endif
