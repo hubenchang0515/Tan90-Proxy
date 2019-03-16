@@ -92,12 +92,23 @@ int tcpmap_set(map_t* map, uv_tcp_t* tcp1, uv_tcp_t* tcp2)
 {
     if(g_hash_table_contains(map, tcp1) || g_hash_table_contains(map, tcp2))
     {
-        log_printf(LOG_ERROR, "Map(%s) has the key tcp(0x%p or 0x%p) already.",
+        log_printf(LOG_ERROR, "Map(%p) has the key tcp(0x%p or 0x%p) already.",
                     map, tcp1, tcp2);
 
         return EXIT_FAILURE;
     }
 
     g_hash_table_insert(map, tcp1, tcp2);
-    g_hash_table_insert(map, tcp2, tcp1);
+    //g_hash_table_insert(map, tcp2, tcp1);
+}
+
+/*********************************************************
+ * Function     : Set key-value to map
+ * Parameters   : map - map_t*
+ *                tcp - tcp_t* 
+ * Return       : int
+*********************************************************/
+int tcpmap_remove(map_t* map, uv_tcp_t* tcp)
+{
+    return g_hash_table_remove(map, tcp);
 }

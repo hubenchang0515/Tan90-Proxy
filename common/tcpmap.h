@@ -42,6 +42,7 @@ map_t* tcpmap_create_map(void);
 void tcpmap_free_map(map_t* map);
 uv_tcp_t* tcpmap_get(map_t* map, uv_tcp_t* tcp);
 int tcpmap_set(map_t* map, uv_tcp_t* tcp1, uv_tcp_t* tcp2);
+int tcpmap_remove(map_t* map, uv_tcp_t* tcp);
 
 
 #endif
