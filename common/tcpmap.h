@@ -43,6 +43,8 @@ void tcpmap_free_map(map_t* map);
 uv_tcp_t* tcpmap_get(map_t* map, uv_tcp_t* tcp);
 int tcpmap_set(map_t* map, uv_tcp_t* tcp1, uv_tcp_t* tcp2);
 int tcpmap_remove(map_t* map, uv_tcp_t* tcp);
+uv_tcp_t** tcpmap_get_all_keys(map_t* map, guint* len);
+void tcpmap_clear(map_t* map);
 
 
 #endif

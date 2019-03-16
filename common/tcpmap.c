@@ -112,3 +112,26 @@ int tcpmap_remove(map_t* map, uv_tcp_t* tcp)
 {
     return g_hash_table_remove(map, tcp);
 }
+
+
+/*********************************************************
+ * Function     : Get all keys of map
+ * Parameters   : map - map_t*
+ *                len - return number if keys
+ * Return       : uv_tcp_t* []
+*********************************************************/
+uv_tcp_t** tcpmap_get_all_keys(map_t* map, guint* len)
+{
+    return (uv_tcp_t**)g_hash_table_get_keys_as_array(map, len);
+}
+
+
+/*********************************************************
+ * Function     : Clear the map
+ * Parameters   : map - map_t*
+ * Return       : void
+*********************************************************/
+void tcpmap_clear(map_t* map)
+{
+    g_hash_table_remove_all(map);
+}
