@@ -22,14 +22,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ****************************************************************************************/
 
-#ifndef TAN90_PROXY_TCPTO_H
-#define TAN90_PROXY_TCPTO_H
+#ifndef TAN90_PROXY_PROXY_CLIENT_H
+#define TAN90_PROXY_PROXY_CLIENT_H
 
 #include <uv.h>
 #include <glib.h>
 
-void tcp_to_has_connection(uv_stream_t* tcp, int status);
-void tcp_to_proxy_can_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf);
-void tcp_to_control_can_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf);
+void proxy_client_has_connection(uv_stream_t* tcp, int status);
+void proxy_client_proxy_can_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf);
+void proxy_client_control_can_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf);
 
 #endif

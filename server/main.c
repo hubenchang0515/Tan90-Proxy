@@ -4,18 +4,8 @@
 
 #include "common.h"
 
-#include "tcpto.h"
-
-void allocer(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf);
-
-void tcp_from_has_connection(uv_stream_t* tcp, int status);
-void tcp_from_can_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf);
-
-
-
-#ifndef loop
-#define loop uv_default_loop()
-#endif
+#include "proxyclient.h"
+#include "trueclient.h"
 
 int main(int argc, char* argv[])
 {
@@ -43,11 +33,11 @@ int main(int argc, char* argv[])
 
         /* bind */
         int uv_err = 0;
-        uv_tcp_t* tcp_from = malloc(sizeof(uv_tcp_t));
-        uv_tcp_init(loop, tcp_from);
+        uv_tcp_t* true_client = malloc(sizeof(uv_tcp_t));
+        uv_tcp_init(loop, true_client);
         struct sockaddr_in addr;
         uv_ip4_addr(from_ip, from_port, &addr);
-        uv_err = uv_tcp_bind(tcp_from, (const struct sockaddr *)&addr, 0);
+        uv_err = uv_tcp_bind(true_client, (const struct sockaddr *)&addr, 0);
         if(uv_err < 0)
         {
             log_printf(LOG_ERROR, "Bind %s:%d error : %s.",
@@ -55,10 +45,10 @@ int main(int argc, char* argv[])
             continue;
         }
 
-        uv_tcp_t* tcp_to = malloc(sizeof(uv_tcp_t));
-        uv_tcp_init(loop, tcp_to);
+        uv_tcp_t* proxy_client = malloc(sizeof(uv_tcp_t));
+        uv_tcp_init(loop, proxy_client);
         uv_ip4_addr(to_ip, to_port, &addr);
-        uv_err = uv_tcp_bind(tcp_to, (const struct sockaddr *)&addr, 0);
+        uv_err = uv_tcp_bind(proxy_client, (const struct sockaddr *)&addr, 0);
         if(uv_err < 0)
         {
             log_printf(LOG_ERROR, "Bind %s:%d error : %s.",
@@ -67,14 +57,14 @@ int main(int argc, char* argv[])
         }
         
         /* listen */
-        uv_err = uv_listen((uv_stream_t*)tcp_from, 100, tcp_from_has_connection);
+        uv_err = uv_listen((uv_stream_t*)true_client, 100, true_client_has_connection);
         if(uv_err < 0)
         {
             log_printf(LOG_ERROR, "Listen %s:%d error : %s.",
                         from_ip, from_port, uv_strerror(uv_err));
         }
 
-        uv_err = uv_listen((uv_stream_t*)tcp_to, 100, tcp_to_has_connection);
+        uv_err = uv_listen((uv_stream_t*)proxy_client, 100, proxy_client_has_connection);
         if(uv_err < 0)
         {
             log_printf(LOG_ERROR, "Listen %s:%d error : %s.",
@@ -91,8 +81,8 @@ int main(int argc, char* argv[])
         userdata->control = NULL;
         userdata->idle_queue = tcpmap_create_queue();
         userdata->all_tcp = tcpmap_create_map();
-        tcp_from->data = userdata;
-        tcp_to->data = userdata;
+        true_client->data = userdata;
+        proxy_client->data = userdata;
     }
     g_strfreev(groups);
 

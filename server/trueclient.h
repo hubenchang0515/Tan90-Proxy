@@ -29,7 +29,7 @@ SOFTWARE.
 #include <glib.h>
 #include "../common/tcpmap.h"
 
-void tcp_from_has_connection(uv_stream_t* tcp, int status);
-void tcp_from_can_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf);
+void true_client_has_connection(uv_stream_t* tcp, int status);
+void true_client_can_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf);
 
 #endif

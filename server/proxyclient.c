@@ -24,10 +24,10 @@ SOFTWARE.
 
 
 #include "common.h"
-#include "tcpto.h"
+#include "proxyclient.h"
 
 
-void tcp_to_has_connection(uv_stream_t* tcp, int status)
+void proxy_client_has_connection(uv_stream_t* tcp, int status)
 {
     if(status < 0)
     {
@@ -53,7 +53,7 @@ void tcp_to_has_connection(uv_stream_t* tcp, int status)
         data_control->control = connection;
         connection->data = data_control;
         /* regist read call-back */
-        uv_read_start((uv_stream_t*)connection, allocer, tcp_to_control_can_read); 
+        uv_read_start((uv_stream_t*)connection, allocer, proxy_client_control_can_read); 
         /* print ip:port */
         int len = sizeof(data_control->addr);
         uv_tcp_getpeername(connection, (struct sockaddr*)&(data_control->addr), &len);
@@ -78,7 +78,7 @@ void tcp_to_has_connection(uv_stream_t* tcp, int status)
         uv_tcp_getpeername(connection, (struct sockaddr*)&(data_proxy->addr), &len);
         if(data_proxy->partner == NULL)
         {
-            log_printf(LOG_ERROR, "Get connection from %s:%d but no idle connection.",
+            log_printf(LOG_ERROR, "Get connection from proxy client %s:%d but no idle true client connection.",
                         inet_ntoa(data_proxy->addr.sin_addr), htons(data_proxy->addr.sin_port));
 
             /* close and free */
@@ -87,7 +87,7 @@ void tcp_to_has_connection(uv_stream_t* tcp, int status)
         }
         else
         {
-            log_printf(LOG_INFO, "Get proxy connection from %s:%d.",
+            log_printf(LOG_INFO, "Get connection from proxy client %s:%d.",
                         inet_ntoa(data_proxy->addr.sin_addr), htons(data_proxy->addr.sin_port));
 
             /* store to map */
@@ -95,12 +95,12 @@ void tcp_to_has_connection(uv_stream_t* tcp, int status)
         }
 
         /* regist read call-back */
-        uv_read_start((uv_stream_t*)connection, allocer, tcp_to_proxy_can_read);
+        uv_read_start((uv_stream_t*)connection, allocer, proxy_client_proxy_can_read);
     }
 }
 
 
-void tcp_to_control_can_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
+void proxy_client_control_can_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
 {
     data_control_t* data = stream->data;
     if(nread < 0 && nread != UV_EOF) // error
@@ -117,14 +117,14 @@ void tcp_to_control_can_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t 
         uv_tcp_t** keys = tcpmap_get_all_keys(data->all_tcp, &length);
         for(guint i = 0; i < length; i++)
         {
-            uv_tcp_t* tcp_to_proxy = keys[i];
-            data_proxy_t* data_proxy = tcp_to_proxy->data;
+            uv_tcp_t* proxy_client_proxy = keys[i];
+            data_proxy_t* data_proxy = proxy_client_proxy->data;
 
             /* disconnect */
             log_printf(LOG_INFO, "Disconnect proxy connection from %s:%d.",
                         inet_ntoa(data_proxy->addr.sin_addr), htons(data_proxy->addr.sin_port));
             uv_close((uv_handle_t*)(data_proxy->partner), free_self);
-            uv_close((uv_handle_t*)tcp_to_proxy, free_with_data);
+            uv_close((uv_handle_t*)proxy_client_proxy, free_with_data);
         }
         g_free(keys);
         tcpmap_clear(data->all_tcp);
@@ -150,7 +150,7 @@ void tcp_to_control_can_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t 
 }
 
 
-void tcp_to_proxy_can_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
+void proxy_client_proxy_can_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
 {
     data_proxy_t* data = stream->data;
     data_control_t* data_control = data->data_control;
