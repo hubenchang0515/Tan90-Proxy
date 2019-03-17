@@ -62,37 +62,39 @@ void proxy_client_has_connection(uv_stream_t* tcp, int status)
     }
     else // proxy connection
     {
-        /* bind with idle queue */
+        /* malloc user data */
         data_proxy_t* data_proxy = malloc(sizeof(data_proxy_t));
         if(data_proxy == NULL)
         {
             log_printf(LOG_ERROR, "Malloc %s bytes error.", sizeof(data_proxy_t));
             return;
         }
-        
-        data_proxy->partner = tcpmap_pop_idle(data_control->idle_queue);
-        data_proxy->data_control = data_control;
-        connection->data = data_proxy;
-        /* print ip:port */
         int len = sizeof(struct sockaddr_in);
         uv_tcp_getpeername(connection, (struct sockaddr*)&(data_proxy->addr), &len);
+        connection->data = data_proxy;
+        data_proxy->data_control = data_control;
+        
+        /* bind to true client */
+        data_proxy->partner = tcpmap_get_first_key(data_control->idle_tcp);
         if(data_proxy->partner == NULL)
         {
             log_printf(LOG_ERROR, "Get connection from proxy client %s:%d but no idle true client connection.",
                         inet_ntoa(data_proxy->addr.sin_addr), htons(data_proxy->addr.sin_port));
 
             /* close and free */
-            uv_close((uv_handle_t*)connection, free_self);
+            uv_close((uv_handle_t*)connection, free_with_data);
             return;
         }
-        else
-        {
-            log_printf(LOG_INFO, "Get connection from proxy client %s:%d.",
-                        inet_ntoa(data_proxy->addr.sin_addr), htons(data_proxy->addr.sin_port));
+        tcpmap_remove(data_control->idle_tcp, data_proxy->partner);
+        data_proxy_t* data_proxy_of_partner = data_proxy->partner->data;
+        data_proxy_of_partner->partner = connection;
 
-            /* store to map */
-            tcpmap_set(data_control->all_tcp, connection, data_proxy->partner);
-        }
+        /* print ip:port */
+        log_printf(LOG_INFO, "Get connection from proxy client %s:%d.",
+                    inet_ntoa(data_proxy->addr.sin_addr), htons(data_proxy->addr.sin_port));
+
+        /* store to map */
+        tcpmap_set(data_control->all_tcp, connection, data_proxy->partner);
 
         /* regist read call-back */
         uv_read_start((uv_stream_t*)connection, allocer, proxy_client_proxy_can_read);
@@ -121,13 +123,27 @@ void proxy_client_control_can_read(uv_stream_t *stream, ssize_t nread, const uv_
             data_proxy_t* data_proxy = proxy_client_proxy->data;
 
             /* disconnect */
-            log_printf(LOG_INFO, "Disconnect proxy connection from %s:%d.",
+            log_printf(LOG_INFO, "Disconnect proxy connection from proxy client %s:%d.",
                         inet_ntoa(data_proxy->addr.sin_addr), htons(data_proxy->addr.sin_port));
             uv_close((uv_handle_t*)(data_proxy->partner), free_self);
             uv_close((uv_handle_t*)proxy_client_proxy, free_with_data);
         }
         g_free(keys);
         tcpmap_clear(data->all_tcp);
+
+        /* Disconnect all idle tcp */
+        keys = tcpmap_get_all_keys(data->idle_tcp, &length);
+        for(guint i = 0; i < length; i++)
+        {
+            uv_tcp_t* true_client_proxy = keys[i];
+            data_proxy_t* data_proxy = true_client_proxy->data;
+
+            log_printf(LOG_INFO, "Disconnect proxy connection from true client %s:%d.",
+                        inet_ntoa(data_proxy->addr.sin_addr), htons(data_proxy->addr.sin_port));
+            uv_close((uv_handle_t*)true_client_proxy, free_with_data);
+        }
+        g_free(keys);
+        tcpmap_clear(data->idle_tcp);
 
         /* close and free */
         uv_close((uv_handle_t*)(stream), free_self);

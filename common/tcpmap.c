@@ -82,6 +82,21 @@ uv_tcp_t* tcpmap_get(map_t* map, uv_tcp_t* tcp)
 
 
 /*********************************************************
+ * Function     : Get the first key key map
+ * Parameters   : map - map_t*
+ * Return       : tcp_t*
+*********************************************************/
+uv_tcp_t* tcpmap_get_first_key(map_t* map)
+{
+    guint length = 0;
+    uv_tcp_t** keys = tcpmap_get_all_keys(map, &length);
+    uv_tcp_t* ret = keys[0];
+    g_free(keys);
+    return ret;
+}
+
+
+/*********************************************************
  * Function     : Set key-value to map
  * Parameters   : map - map_t*
  *                tcp1 - tcp_t* 

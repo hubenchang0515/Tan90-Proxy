@@ -79,7 +79,7 @@ int main(int argc, char* argv[])
             continue;
         }
         userdata->control = NULL;
-        userdata->idle_queue = tcpmap_create_queue();
+        userdata->idle_tcp = tcpmap_create_map();
         userdata->all_tcp = tcpmap_create_map();
         true_client->data = userdata;
         proxy_client->data = userdata;

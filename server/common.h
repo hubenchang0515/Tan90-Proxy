@@ -45,7 +45,7 @@ typedef struct TcpProxyConnectionUserData data_proxy_t;
 struct TcpControlConnectionUserData
 {
     uv_tcp_t* control;              // control connection
-    queue_t* idle_queue;            // idle tcp from true client
+    map_t* idle_tcp;                // idle tcp from true client waiting for serve
     map_t* all_tcp;                 // all tcp from proxy client
     struct sockaddr_in addr;        // address of control connection
 };
