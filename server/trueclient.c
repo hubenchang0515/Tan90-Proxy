@@ -45,10 +45,10 @@ void true_client_has_connection(uv_stream_t* tcp, int status)
     tcpmap_set(data_control->idle_tcp, connection, NULL);
 
     /* regist read call-back */
-    uv_read_start((uv_stream_t*) connection, allocer, true_client_can_read);
+    uv_read_start((uv_stream_t*) connection, allocer, true_client_read);
 }
 
-void true_client_can_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
+void true_client_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
 {
     data_proxy_t* data_proxy = stream->data;
     data_control_t* data_control = data_proxy->data_control;
@@ -66,14 +66,42 @@ void true_client_can_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *bu
         uv_close((uv_handle_t*)stream, free_with_data);
         uv_close((uv_handle_t*)(data_proxy->partner), free_with_data);
     }
-    else if(nread > 0 && nread < buf->len) // read completely
+    else    //if(nread > 0 && nread < buf->len) // read completely
     {
-
+        uv_write_t* req = malloc(sizeof(uv_write_t));
+        if(req == NULL)
+        {
+            log_printf(LOG_ERROR, "Malloc %d bytes error.", sizeof(uv_write_t));
+            return;
+        }
+        uv_buf_t* new_buf = malloc(sizeof(uv_buf_t));
+        if(new_buf == NULL)
+        {
+            log_printf(LOG_ERROR, "Malloc %d bytes error.", sizeof(uv_buf_t));
+            return;
+        }
+        new_buf->base = buf->base;
+        new_buf->len = nread;
+        req->data = new_buf;
+        uv_write(req, (uv_stream_t*)data_proxy->partner, new_buf, 1, true_client_written);
     }
-    else // read uncompletely
-    {
-        
-    }
+    // else // read uncompletely
+    // {
+    //     uv_write_t* req = malloc(sizeof(uv_write_t));
+    //     if(req == NULL)
+    //     {
+    //         log_printf(LOG_ERROR, "Malloc %d bytes error.", sizeof(uv_write_t));
+    //         return;
+    //     }
+    //     uv_write(req, (uv_stream_t*)data_proxy->partner, buf, 1, true_client_written);
+    // }
 }
 
 
+void true_client_written(uv_write_t* req, int status)
+{
+    uv_buf_t* buf = req->data;
+    free(buf->base);
+    free(buf);
+    free(req);
+}
