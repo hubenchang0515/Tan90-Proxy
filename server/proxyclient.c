@@ -97,8 +97,9 @@ void proxy_client_has_connection(uv_stream_t* tcp, int status)
         data_proxy_of_partner->partner = connection;
 
         /* print ip:port */
-        log_printf(LOG_INFO, "Get connection from proxy client %s:%d.",
-                    inet_ntoa(data_proxy->addr.sin_addr), htons(data_proxy->addr.sin_port));
+        log_printf(LOG_INFO, "Get connection from proxy client %s:%d , bind with true client %s:%d.",
+                    inet_ntoa(data_proxy->addr.sin_addr), htons(data_proxy->addr.sin_port),
+                    inet_ntoa(data_proxy_of_partner->addr.sin_addr), htons(data_proxy_of_partner->addr.sin_port));
 
         /* store to map */
         tcpmap_set(data_control->all_tcp, connection, data_proxy->partner);
