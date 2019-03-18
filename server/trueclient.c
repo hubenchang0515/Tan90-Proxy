@@ -34,6 +34,7 @@ void true_client_has_connection(uv_stream_t* tcp, int status)
     }
     connection->data = data;
     data->data_control = data_control;
+    data->partner = NULL;
 
     /* get peer ip:port */
     int len = sizeof(data_control->addr);
@@ -65,6 +66,11 @@ void true_client_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
         tcpmap_remove(data_control->idle_tcp, (uv_tcp_t*)stream); // may hadn't been served
         uv_close((uv_handle_t*)stream, free_with_data);
         uv_close((uv_handle_t*)(data_proxy->partner), free_with_data);
+    }
+    else if(data_proxy->partner == NULL) // hasn't been bind to proxy client
+    {
+        free(buf->base);
+        return;
     }
     else    //if(nread > 0 && nread < buf->len) // read completely
     {

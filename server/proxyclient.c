@@ -79,6 +79,7 @@ void proxy_client_has_connection(uv_stream_t* tcp, int status)
         uv_tcp_getpeername(connection, (struct sockaddr*)&(data_proxy->addr), &len);
         connection->data = data_proxy;
         data_proxy->data_control = data_control;
+        data_proxy->partner = NULL;
         
         /* bind to true client */
         data_proxy->partner = tcpmap_get_first_key(data_control->idle_tcp);
@@ -208,6 +209,11 @@ void proxy_client_proxy_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t*
         /* disconnect */
         uv_close((uv_handle_t*)(data->partner), free_self);
         uv_close((uv_handle_t*)stream, free_with_data);
+    }
+    else if(data->partner == NULL) // hasn't been bind to true client
+    {
+        free(buf->base);
+        return;
     }
     else    // if(nread > 0 && nread < buf->len) // read completely
     {
