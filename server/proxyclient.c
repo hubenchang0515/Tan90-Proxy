@@ -27,6 +27,12 @@ SOFTWARE.
 #include "proxyclient.h"
 
 
+/*********************************************************
+ * Function     : Callback function while get new connection
+ * Parameters   : tcp - uv_stream_t*
+ *                status - status of connection
+ * Return       : void
+*********************************************************/
 void proxy_client_has_connection(uv_stream_t* tcp, int status)
 {
     if(status < 0)
@@ -53,7 +59,7 @@ void proxy_client_has_connection(uv_stream_t* tcp, int status)
         data_control->control = connection;
         connection->data = data_control;
         /* regist read call-back */
-        uv_read_start((uv_stream_t*)connection, allocer, proxy_client_control_can_read); 
+        uv_read_start((uv_stream_t*)connection, allocer, proxy_client_control_read); 
         /* print ip:port */
         int len = sizeof(data_control->addr);
         uv_tcp_getpeername(connection, (struct sockaddr*)&(data_control->addr), &len);
@@ -97,12 +103,21 @@ void proxy_client_has_connection(uv_stream_t* tcp, int status)
         tcpmap_set(data_control->all_tcp, connection, data_proxy->partner);
 
         /* regist read call-back */
-        uv_read_start((uv_stream_t*)connection, allocer, proxy_client_proxy_can_read);
+        uv_read_start((uv_stream_t*)connection, allocer, proxy_client_proxy_read);
     }
 }
 
 
-void proxy_client_control_can_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
+
+/*********************************************************
+ * Function     : Callback function while read data from
+ *                control connection
+ * Parameters   : tcp - uv_stream_t*
+ *                nread - how many bytes read
+ *                buf - data
+ * Return       : void
+*********************************************************/
+void proxy_client_control_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf)
 {
     data_control_t* data = stream->data;
     if(nread < 0 && nread != UV_EOF) // error
@@ -148,7 +163,6 @@ void proxy_client_control_can_read(uv_stream_t *stream, ssize_t nread, const uv_
         /* close and free */
         uv_close((uv_handle_t*)(stream), free_self);
         
-
         /* Reset  */
         data->control = NULL;
     }
@@ -166,7 +180,16 @@ void proxy_client_control_can_read(uv_stream_t *stream, ssize_t nread, const uv_
 }
 
 
-void proxy_client_proxy_can_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
+
+/*********************************************************
+ * Function     : Callback function while read data from
+ *                proxy connection
+ * Parameters   : tcp - uv_stream_t*
+ *                nread - how many bytes read
+ *                buf - data
+ * Return       : void
+*********************************************************/
+void proxy_client_proxy_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf)
 {
     data_proxy_t* data = stream->data;
     data_control_t* data_control = data->data_control;
@@ -185,21 +208,66 @@ void proxy_client_proxy_can_read(uv_stream_t *stream, ssize_t nread, const uv_bu
         /* disconnect */
         uv_close((uv_handle_t*)(data->partner), free_self);
         uv_close((uv_handle_t*)stream, free_with_data);
-
-        
-
     }
-    else if(nread > 0 && nread < buf->len) // read completely
+    else    // if(nread > 0 && nread < buf->len) // read completely
     {
-        // TODO 转发消息
+        uv_write_t* req = malloc(sizeof(uv_write_t));
+        if(req == NULL)
+        {
+            log_printf(LOG_ERROR, "Malloc %d bytes error.", sizeof(uv_write_t));
+            return;
+        }
+        uv_buf_t* new_buf = malloc(sizeof(uv_buf_t));
+        if(new_buf == NULL)
+        {
+            free(req);
+            log_printf(LOG_ERROR, "Malloc %d bytes error.", sizeof(uv_buf_t));
+            return;
+        }
+        new_buf->base = buf->base;
+        new_buf->len = nread;
+        req->data = new_buf;
+        uv_write(req, (uv_stream_t*)data->partner, new_buf, 1, proxy_client_proxy_written);
     }
-    else // read uncompletely
-    {
-        // TODO 转发消息
-    }
+    // else // read uncompletely
+    // {
+    //     uv_write_t* req = malloc(sizeof(uv_write_t));
+    //     if(req == NULL)
+    //     {
+    //         log_printf(LOG_ERROR, "Malloc %d bytes error.", sizeof(uv_write_t));
+    //         return;
+    //     }
+    //     uv_write(req, (uv_stream_t*)data->partner, buf, 1, proxy_client_proxy_written);
+    // }
 
-
-    free(buf->base);
+    //free(buf->base);
 }
 
 
+/*********************************************************
+ * Function     : Callback function while written data to
+ *                proxy connection
+ * Parameters   : req - uv_write_t*
+ *                status - status of writing
+ * Return       : void
+*********************************************************/
+void proxy_client_proxy_written(uv_write_t* req, int status)
+{
+    uv_buf_t* buf = req->data;
+    free(buf->base);
+    free(buf);
+    free(req);
+}
+
+
+/*********************************************************
+ * Function     : Callback function while written data to
+ *                control connection
+ * Parameters   : req - uv_write_t*
+ *                status - status of writing
+ * Return       : void
+*********************************************************/
+void proxy_client_control_written(uv_write_t* req, int status)
+{
+    
+}
