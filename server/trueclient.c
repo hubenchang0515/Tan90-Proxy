@@ -53,15 +53,18 @@ void true_client_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
 {
     data_proxy_t* data_proxy = stream->data;
     data_control_t* data_control = data_proxy->data_control;
-    if(nread < 0 && nread != UV_EOF) // error
+    if(nread < 0 || nread == UV_EOF)
     {
-
-    }
-    else if(nread == UV_EOF) // has no data
-    {
-        log_printf(LOG_INFO, "Loss connection from true client %s:%d.",
-                    inet_ntoa(data_proxy->addr.sin_addr), htons(data_proxy->addr.sin_port));
-        
+        if(nread < 0) // error
+        {
+            log_printf(LOG_ERROR, "Exceptionally loss connection from true client %s:%d.",
+                            inet_ntoa(data_proxy->addr.sin_addr), htons(data_proxy->addr.sin_port));
+        }
+        else  // has no data
+        {
+            log_printf(LOG_INFO, "Loss connection from true client %s:%d.",
+                        inet_ntoa(data_proxy->addr.sin_addr), htons(data_proxy->addr.sin_port));
+        }
         tcpmap_remove(data_control->all_tcp, data_proxy->partner);
         tcpmap_remove(data_control->idle_tcp, (uv_tcp_t*)stream); // may hadn't been served
         uv_close((uv_handle_t*)stream, free_with_data);
