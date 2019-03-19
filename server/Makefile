@@ -12,8 +12,8 @@ $(TARGET) : $(TARGET_O)
 	gcc -o $(TARGET) $(TARGET_O) $(LDFLAGS)
 
 main.o : main.c proxyclient.h trueclient.h userdata.h
-proxyclient.o : proxyclient.c proxyclient.h userdata.h
-trueclient.o : trueclient.c trueclient.h userdata.h
+proxyclient.o : proxyclient.c proxyclient.h trueclient.h userdata.h
+trueclient.o : trueclient.c trueclient.h proxyclient.h userdata.h
 
 clean : 
 	rm -f $(TARGET_O)
