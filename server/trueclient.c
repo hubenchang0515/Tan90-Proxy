@@ -1,5 +1,6 @@
 #include "../common/common.h"
 #include "trueclient.h"
+#include "proxyclient.h"
 
 void true_client_has_connection(uv_stream_t* tcp, int status)
 {
@@ -47,6 +48,33 @@ void true_client_has_connection(uv_stream_t* tcp, int status)
 
     /* regist read call-back */
     uv_read_start((uv_stream_t*) connection, allocer, true_client_read);
+
+    /* tell proxy client */
+    uv_write_t* req = malloc(sizeof(uv_write_t));
+    if(req == NULL)
+    {
+        log_printf(LOG_ERROR, "Malloc %d bytes error.", sizeof(uv_write_t));
+        return;
+    }
+    uv_buf_t* new_buf = malloc(sizeof(uv_buf_t));
+    if(new_buf == NULL)
+    {
+        free(req);
+        log_printf(LOG_ERROR, "Malloc %d bytes error.", sizeof(uv_buf_t));
+        return;
+    }
+    new_buf->base = malloc(sizeof(char));
+    if(new_buf->base == NULL)
+    {
+        free(req);
+        free(new_buf);
+        log_printf(LOG_ERROR, "Malloc %d bytes error.", sizeof(uv_buf_t));
+        return;
+    }
+    new_buf->base[0] = CMD_NEW_PROXY;
+    new_buf->len = 1;
+    req->data = new_buf;
+    uv_write(req, (uv_stream_t*)data_control->control, new_buf, 1, proxy_client_control_written);
 }
 
 void true_client_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
@@ -55,20 +83,24 @@ void true_client_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
     data_control_t* data_control = data_proxy->data_control;
     if(nread < 0 || nread == UV_EOF)
     {
-        if(nread < 0) // error
-        {
-            log_printf(LOG_ERROR, "Exceptionally loss connection from true client %s:%d.",
-                            inet_ntoa(data_proxy->addr.sin_addr), htons(data_proxy->addr.sin_port));
-        }
-        else  // has no data
+        if(nread == UV_EOF) // disconnected
         {
             log_printf(LOG_INFO, "Loss connection from true client %s:%d.",
                         inet_ntoa(data_proxy->addr.sin_addr), htons(data_proxy->addr.sin_port));
         }
+        else // error
+        {
+            log_printf(LOG_ERROR, "Exceptionally loss connection from true client %s:%d.",
+                            inet_ntoa(data_proxy->addr.sin_addr), htons(data_proxy->addr.sin_port));
+        }
+        
         tcpmap_remove(data_control->all_tcp, data_proxy->partner);
         tcpmap_remove(data_control->idle_tcp, (uv_tcp_t*)stream); // may hadn't been served
         uv_close((uv_handle_t*)stream, free_with_data);
-        uv_close((uv_handle_t*)(data_proxy->partner), free_with_data);
+        if(data_proxy->partner != NULL)
+        {
+            uv_close((uv_handle_t*)(data_proxy->partner), free_with_data);
+        }
     }
     else if(data_proxy->partner == NULL) // hasn't been bind to proxy client
     {

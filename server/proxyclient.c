@@ -124,16 +124,17 @@ void proxy_client_control_read(uv_stream_t* stream, ssize_t nread, const uv_buf_
     data_control_t* data = stream->data;
     if(nread < 0 || nread == UV_EOF)
     {
-        if(nread < 0) // error
-        {
-            log_printf(LOG_ERROR, "Exceptionally loss control connection from %s:%d.",
-                            inet_ntoa(data->addr.sin_addr), htons(data->addr.sin_port));
-        }
-        else // has no data (means disconnected)
+        if(nread == UV_EOF) // disconnected
         {
             log_printf(LOG_INFO, "Loss control connection from %s:%d.",
                             inet_ntoa(data->addr.sin_addr), htons(data->addr.sin_port));
         }
+        else // error
+        {
+            log_printf(LOG_ERROR, "Exceptionally loss control connection from %s:%d.",
+                            inet_ntoa(data->addr.sin_addr), htons(data->addr.sin_port));
+        }
+        
         /* Disconnect all proxy tcp */
         guint length = 0;
         uv_tcp_t** keys = tcpmap_get_all_keys(data->all_tcp, &length);
@@ -145,7 +146,7 @@ void proxy_client_control_read(uv_stream_t* stream, ssize_t nread, const uv_buf_
             /* disconnect */
             log_printf(LOG_INFO, "Disconnect proxy connection from proxy client %s:%d.",
                         inet_ntoa(data_proxy->addr.sin_addr), htons(data_proxy->addr.sin_port));
-            uv_close((uv_handle_t*)(data_proxy->partner), free_self);
+            uv_close((uv_handle_t*)(data_proxy->partner), free_with_data);
             uv_close((uv_handle_t*)proxy_client_proxy, free_with_data);
         }
         g_free(keys);
@@ -209,7 +210,10 @@ void proxy_client_proxy_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t*
         tcpmap_remove(data_control->all_tcp, (uv_tcp_t*)stream);
 
         /* disconnect */
-        uv_close((uv_handle_t*)(data->partner), free_self);
+        if(data->partner != NULL)
+        {
+            uv_close((uv_handle_t*)(data->partner), free_self);
+        }
         uv_close((uv_handle_t*)stream, free_with_data);
     }
     else if(data->partner == NULL) // hasn't been bind to true client
@@ -276,4 +280,8 @@ void proxy_client_control_written(uv_write_t* req, int status)
         log_printf(LOG_ERROR, "Writting error : %s.", uv_strerror(status));
         return;
     }
+    uv_buf_t* buf = req->data;
+    free(buf->base);
+    free(buf);
+    free(req);
 }

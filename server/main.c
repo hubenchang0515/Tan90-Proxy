@@ -81,11 +81,11 @@ int main(int argc, char* argv[])
 
         /* bind port to listen true client */
         int uv_err = 0;
-        uv_tcp_t true_client;
-        uv_tcp_init(loop, &true_client);
+        uv_tcp_t* true_client = malloc(sizeof(uv_tcp_t));
+        uv_tcp_init(loop, true_client);
         struct sockaddr_in addr;
         uv_ip4_addr(true_client_ip, true_client_port, &addr);
-        uv_err = uv_tcp_bind(&true_client, (const struct sockaddr *)&addr, 0);
+        uv_err = uv_tcp_bind(true_client, (const struct sockaddr *)&addr, 0);
         if(uv_err < 0)
         {
             log_printf(LOG_ERROR, "Bind %s:%d error : %s.",
@@ -94,10 +94,10 @@ int main(int argc, char* argv[])
         }
 
         /* bind port to listen proxy client */
-        uv_tcp_t proxy_client;
-        uv_tcp_init(loop, &proxy_client);
+        uv_tcp_t* proxy_client = malloc(sizeof(uv_tcp_t));
+        uv_tcp_init(loop, proxy_client);
         uv_ip4_addr(proxy_client_ip, proxy_client_port, &addr);
-        uv_err = uv_tcp_bind(&proxy_client, (const struct sockaddr *)&addr, 0);
+        uv_err = uv_tcp_bind(proxy_client, (const struct sockaddr *)&addr, 0);
         if(uv_err < 0)
         {
             log_printf(LOG_ERROR, "Bind %s:%d error : %s.",
@@ -106,14 +106,14 @@ int main(int argc, char* argv[])
         }
         
         /* listen */
-        uv_err = uv_listen((uv_stream_t*)&true_client, 100, true_client_has_connection);
+        uv_err = uv_listen((uv_stream_t*)true_client, 100, true_client_has_connection);
         if(uv_err < 0)
         {
             log_printf(LOG_ERROR, "Listen %s:%d error : %s.",
                         true_client_ip, true_client_port, uv_strerror(uv_err));
         }
 
-        uv_err = uv_listen((uv_stream_t*)&proxy_client, 100, proxy_client_has_connection);
+        uv_err = uv_listen((uv_stream_t*)proxy_client, 100, proxy_client_has_connection);
         if(uv_err < 0)
         {
             log_printf(LOG_ERROR, "Listen %s:%d error : %s.",
@@ -121,12 +121,12 @@ int main(int argc, char* argv[])
         }
 
         /* bind user data */
-        data_control_t userdata;
-        userdata.control = NULL;
-        userdata.idle_tcp = tcpmap_create_map();
-        userdata.all_tcp = tcpmap_create_map();
-        true_client.data = &userdata;
-        proxy_client.data = &userdata;
+        data_control_t* userdata = malloc(sizeof(data_control_t));
+        userdata->control = NULL;
+        userdata->idle_tcp = tcpmap_create_map();
+        userdata->all_tcp = tcpmap_create_map();
+        true_client->data = userdata;
+        proxy_client->data = userdata;
     }
     g_strfreev(groups);
 
