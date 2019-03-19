@@ -29,6 +29,7 @@ SOFTWARE.
 
 /*********************************************************
  * Function     : Callback function while get new connection
+ *                from proxy client
  * Parameters   : tcp - uv_stream_t*
  *                status - status of connection
  * Return       : void
@@ -184,7 +185,7 @@ void proxy_client_control_read(uv_stream_t* stream, ssize_t nread, const uv_buf_
 
 /*********************************************************
  * Function     : Callback function while read data from
- *                proxy connection
+ *                proxy client
  * Parameters   : tcp - uv_stream_t*
  *                nread - how many bytes read
  *                buf - data
@@ -248,7 +249,7 @@ void proxy_client_proxy_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t*
 
 /*********************************************************
  * Function     : Callback function while written data to
- *                proxy connection
+ *                true client
  * Parameters   : req - uv_write_t*
  *                status - status of writing
  * Return       : void

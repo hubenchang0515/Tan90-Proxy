@@ -2,6 +2,13 @@
 #include "trueclient.h"
 #include "proxyclient.h"
 
+/*********************************************************
+ * Function     : Callback function while get new connection
+ *                from true client
+ * Parameters   : tcp - uv_stream_t*
+ *                status - status of connection
+ * Return       : void
+*********************************************************/
 void true_client_has_connection(uv_stream_t* tcp, int status)
 {
     if(status < 0)
@@ -77,6 +84,15 @@ void true_client_has_connection(uv_stream_t* tcp, int status)
     uv_write(req, (uv_stream_t*)data_control->control, new_buf, 1, proxy_client_control_written);
 }
 
+
+/*********************************************************
+ * Function     : Callback function while read data from
+ *                true client
+ * Parameters   : tcp - uv_stream_t*
+ *                nread - how many bytes read
+ *                buf - data
+ * Return       : void
+*********************************************************/
 void true_client_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
 {
     data_proxy_t* data_proxy = stream->data;
@@ -124,12 +140,19 @@ void true_client_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
         new_buf->base = buf->base;
         new_buf->len = nread;
         req->data = new_buf;
-        uv_write(req, (uv_stream_t*)data_proxy->partner, new_buf, 1, true_client_written);
+        uv_write(req, (uv_stream_t*)data_proxy->partner, new_buf, 1, true_client_proxy_written);
     }
 }
 
 
-void true_client_written(uv_write_t* req, int status)
+/*********************************************************
+ * Function     : Callback function while written data to
+ *                proxy client
+ * Parameters   : req - uv_write_t*
+ *                status - status of writing
+ * Return       : void
+*********************************************************/
+void true_client_proxy_written(uv_write_t* req, int status)
 {
     if(status < 0)
     {

@@ -39,6 +39,13 @@ SOFTWARE.
 #define loop uv_default_loop()
 #endif
 
+/* Command for control connection, only support 1byte(0~255) */
+typedef enum ControlConnectionCommand cmd_t;
+enum ControlConnectionCommand
+{
+    CMD_NEW_PROXY = 0,
+};
+
 void allocer(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf);
 void free_self(uv_handle_t *handle);
 void free_with_data(uv_handle_t *handle);

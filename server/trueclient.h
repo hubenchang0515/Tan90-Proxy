@@ -32,6 +32,6 @@ SOFTWARE.
 
 void true_client_has_connection(uv_stream_t* tcp, int status);
 void true_client_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf);
-void true_client_written(uv_write_t* req, int status);
+void true_client_proxy_written(uv_write_t* req, int status);
 
 #endif
