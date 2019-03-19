@@ -196,16 +196,18 @@ void proxy_client_proxy_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t*
     data_control_t* data_control = data->data_control;
     if(nread < 0 || nread == UV_EOF)
     {
-        if(nread < 0) // error
-        {
-            log_printf(LOG_ERROR, "Exceptionally loss connection from proxy client %s:%d.",
-                            inet_ntoa(data->addr.sin_addr), htons(data->addr.sin_port));
-        }
-        else // has no data (means disconnected)
+        if(nread == UV_EOF)
         {
             log_printf(LOG_INFO, "Loss connection from proxy client %s:%d.",
                             inet_ntoa(data->addr.sin_addr), htons(data->addr.sin_port));
         }
+        else
+        {
+            log_printf(LOG_ERROR, "Exceptionally loss connection from proxy client %s:%d.",
+                            inet_ntoa(data->addr.sin_addr), htons(data->addr.sin_port));
+        }
+        
+        
         /* remove from map */
         tcpmap_remove(data_control->all_tcp, (uv_tcp_t*)stream);
 
