@@ -200,48 +200,51 @@ void proxy_server_control_read(uv_stream_t* stream, ssize_t nread, const uv_buf_
     }
     else
     {
-        switch((unsigned char)buf->base[0])
+        for(int i = 0; i < nread; i++)
         {
-        case CMD_NEW_PROXY:
-            log_printf(LOG_INFO, "Get command CMD_NEW_PROXY(%d).", (unsigned char)buf->base[0]);
-            uv_connect_t* connect_req = malloc(sizeof(uv_connect_t));
-            if(connect_req == NULL)
+            switch((unsigned char)buf->base[i])
             {
-                log_printf(LOG_ERROR, "Malloc %d bytes error.", sizeof(uv_connect_t));
-                return;
-            }
-            data_proxy_t* data_proxy = malloc(sizeof(data_proxy_t));
-            if(data_proxy == NULL)
-            {
-                free(connect_req);
-                log_printf(LOG_ERROR, "Malloc %d bytes error.", sizeof(data_proxy_t));
-                return;
-            }
-            uv_tcp_t* proxy_server = malloc(sizeof(uv_tcp_t));
-            if(proxy_server == NULL)
-            {
-                free(data_proxy);
-                free(connect_req);
-                log_printf(LOG_ERROR, "Malloc %d bytes error.", sizeof(data_proxy_t));
-                return;
-            }
-            uv_tcp_init(loop, proxy_server);
+            case CMD_NEW_PROXY:
+                log_printf(LOG_INFO, "Get command CMD_NEW_PROXY(%d).", (unsigned char)buf->base[0]);
+                uv_connect_t* connect_req = malloc(sizeof(uv_connect_t));
+                if(connect_req == NULL)
+                {
+                    log_printf(LOG_ERROR, "Malloc %d bytes error.", sizeof(uv_connect_t));
+                    return;
+                }
+                data_proxy_t* data_proxy = malloc(sizeof(data_proxy_t));
+                if(data_proxy == NULL)
+                {
+                    free(connect_req);
+                    log_printf(LOG_ERROR, "Malloc %d bytes error.", sizeof(data_proxy_t));
+                    return;
+                }
+                uv_tcp_t* proxy_server = malloc(sizeof(uv_tcp_t));
+                if(proxy_server == NULL)
+                {
+                    free(data_proxy);
+                    free(connect_req);
+                    log_printf(LOG_ERROR, "Malloc %d bytes error.", sizeof(data_proxy_t));
+                    return;
+                }
+                uv_tcp_init(loop, proxy_server);
 
-            /* connect to proxy server */
-            data_proxy->req = connect_req;
-            data_proxy->data_control = data;
-            data_proxy->partner = NULL;
-            connect_req->data = data_proxy;
-            proxy_server->data = data_proxy;
-            uv_tcp_connect(connect_req, proxy_server, 
-                            (const struct sockaddr *)&(data->proxy_server_addr), 
-                            proxy_server_proxy_connected);
-            
-            break;
+                /* connect to proxy server */
+                data_proxy->req = connect_req;
+                data_proxy->data_control = data;
+                data_proxy->partner = NULL;
+                connect_req->data = data_proxy;
+                proxy_server->data = data_proxy;
+                uv_tcp_connect(connect_req, proxy_server, 
+                                (const struct sockaddr *)&(data->proxy_server_addr), 
+                                proxy_server_proxy_connected);
+                
+                break;
 
-        default:
-            log_printf(LOG_ERROR, "Unsupported control command 0x%x.", 
-                        (unsigned char)buf->base[0]);
+            default:
+                log_printf(LOG_ERROR, "Unsupported control command 0x%x.", 
+                            (unsigned char)buf->base[0]);
+            }
         }
     }
     
@@ -257,6 +260,7 @@ void proxy_server_control_read(uv_stream_t* stream, ssize_t nread, const uv_buf_
 *********************************************************/
 void proxy_server_proxy_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf)
 {
+    log_printf(LOG_WARNING, "Proxy data.");
     data_proxy_t* data_proxy = stream->data;
     data_control_t* data_control = data_proxy->data_control;
     if(nread < 0 || nread == UV_EOF)
@@ -284,6 +288,7 @@ void proxy_server_proxy_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t*
     }
     else if(data_proxy->partner == NULL)
     {
+        log_printf(LOG_ERROR, "Get data but not partner.");
         free(buf->base);
         return;
     }

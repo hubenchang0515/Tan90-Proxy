@@ -195,6 +195,7 @@ void proxy_client_control_read(uv_stream_t* stream, ssize_t nread, const uv_buf_
 *********************************************************/
 void proxy_client_proxy_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf)
 {
+    log_printf(LOG_WARNING, "Proxy data.");
     data_proxy_t* data = stream->data;
     data_control_t* data_control = data->data_control;
     if(nread < 0 || nread == UV_EOF)
@@ -223,6 +224,7 @@ void proxy_client_proxy_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t*
     }
     else if(data->partner == NULL) // hasn't been bind to true client
     {
+        log_printf(LOG_ERROR, "Get data but not partner.");
         free(buf->base);
         return;
     }
