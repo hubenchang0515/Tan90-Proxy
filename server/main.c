@@ -82,6 +82,11 @@ int main(int argc, char* argv[])
         /* bind port to listen true client */
         int uv_err = 0;
         uv_tcp_t* true_client = malloc(sizeof(uv_tcp_t));
+        if(true_client == NULL)
+        {
+            log_printf(LOG_ERROR, "Malloc %d bytes error.", sizeof(uv_tcp_t));
+            break;
+        }
         uv_tcp_init(loop, true_client);
         struct sockaddr_in addr;
         uv_ip4_addr(true_client_ip, true_client_port, &addr);
@@ -95,6 +100,12 @@ int main(int argc, char* argv[])
 
         /* bind port to listen proxy client */
         uv_tcp_t* proxy_client = malloc(sizeof(uv_tcp_t));
+        if(proxy_client == NULL)
+        {
+            free(true_client);
+            log_printf(LOG_ERROR, "Malloc %d bytes error.", sizeof(uv_tcp_t));
+            break;
+        }
         uv_tcp_init(loop, proxy_client);
         uv_ip4_addr(proxy_client_ip, proxy_client_port, &addr);
         uv_err = uv_tcp_bind(proxy_client, (const struct sockaddr *)&addr, 0);
@@ -122,6 +133,13 @@ int main(int argc, char* argv[])
 
         /* bind user data */
         data_control_t* userdata = malloc(sizeof(data_control_t));
+        if(userdata == NULL)
+        {
+            free(proxy_client);
+            free(true_client);
+            log_printf(LOG_ERROR, "Malloc %d bytes error.", sizeof(data_control_t));
+            break;
+        }
         userdata->control = NULL;
         userdata->idle_tcp = tcpmap_create_map();
         userdata->all_tcp = tcpmap_create_map();
