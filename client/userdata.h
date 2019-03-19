@@ -22,33 +22,30 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ****************************************************************************************/
 
-#ifndef TAN90_PROXY_COMMON_H
-#define TAN90_PROXY_COMMON_H
+#ifndef TAN90_PROXY_CLIENT_USERDATA_H
+#define TAN90_PROXY_CLIENT_USERDATA_H
 
-#include <uv.h>
-#include <glib.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
+#include "../common/common.h"
 
-#include "tcpmap.h"
-#include "log.h"
-#include "config.h"
+typedef struct TcpControlConnectionUserData data_control_t;
+typedef struct TcpProxyConnectionUserData data_proxy_t;
 
-#ifndef loop
-#define loop uv_default_loop()
-#endif
-
-/* Command for control connection, only support 1byte(0~255) */
-typedef enum ControlConnectionCommand cmd_t;
-enum ControlConnectionCommand
+struct TcpControlConnectionUserData
 {
-    CMD_NEW_PROXY = 0x01,
+    uv_connect_t* req;                      // req
+    uv_tcp_t* control;                      // control connection
+    map_t* all_tcp;                         // all tcp to proxy server
+    map_t* idle_tcp;                        // idel tcp to proxy server
+    struct sockaddr_in proxy_server_addr;   // proxy server address
+    struct sockaddr_in true_server_addr;    // true server address
 };
 
-void allocer(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf);
-void free_self(uv_handle_t *handle);
-void free_with_data(uv_handle_t *handle);
-const char* filename(const char* path, char* output, size_t size);
+
+struct TcpProxyConnectionUserData
+{
+    uv_connect_t* req;
+    data_control_t* data_control;
+    uv_tcp_t* partner;
+};
 
 #endif

@@ -22,33 +22,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ****************************************************************************************/
 
-#ifndef TAN90_PROXY_COMMON_H
-#define TAN90_PROXY_COMMON_H
+#ifndef TAN90_PROXY_TRUE_SERVER_H
+#define TAN90_PROXY_TRUE_SERVER_H
 
-#include <uv.h>
-#include <glib.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
+#include "../common/common.h"
+#include "userdata.h"
 
-#include "tcpmap.h"
-#include "log.h"
-#include "config.h"
-
-#ifndef loop
-#define loop uv_default_loop()
-#endif
-
-/* Command for control connection, only support 1byte(0~255) */
-typedef enum ControlConnectionCommand cmd_t;
-enum ControlConnectionCommand
-{
-    CMD_NEW_PROXY = 0x01,
-};
-
-void allocer(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf);
-void free_self(uv_handle_t *handle);
-void free_with_data(uv_handle_t *handle);
-const char* filename(const char* path, char* output, size_t size);
+void true_server_proxy_connected(uv_connect_t* req, int status);
+void true_server_proxy_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf);
+void true_server_proxy_written(uv_write_t* req, int status);
 
 #endif

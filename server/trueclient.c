@@ -82,6 +82,7 @@ void true_client_has_connection(uv_stream_t* tcp, int status)
     new_buf->len = 1;
     req->data = new_buf;
     uv_write(req, (uv_stream_t*)data_control->control, new_buf, 1, proxy_client_control_written);
+    log_printf(LOG_INFO, "Send command CMD_NEW_PROXY(%u)", (unsigned char)(new_buf->base[0]));
 }
 
 
