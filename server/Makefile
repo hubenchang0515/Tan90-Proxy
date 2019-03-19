@@ -9,12 +9,11 @@ TARGET_O = main.o proxyclient.o trueclient.o
 all : $(TARGET)
 
 $(TARGET) : $(TARGET_O)
-	cd ../common && $(MAKE)
 	gcc -o $(TARGET) $(TARGET_O) $(LDFLAGS)
 
-main.o : main.c
-proxyclient.o : proxyclient.c proxyclient.h
-trueclient.o : trueclient.c trueclient.h
+main.o : main.c proxyclient.h trueclient.h userdata.h
+proxyclient.o : proxyclient.c proxyclient.h userdata.h
+trueclient.o : trueclient.c trueclient.h userdata.h
 
 clean : 
 	rm -f $(TARGET_O)

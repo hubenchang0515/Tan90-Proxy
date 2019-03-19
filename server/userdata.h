@@ -22,26 +22,28 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ****************************************************************************************/
 
-#ifndef TAN90_PROXY_COMMON_H
-#define TAN90_PROXY_COMMON_H
+#ifndef TAN90_PROXY_SERVER_USERDATA_H
+#define TAN90_PROXY_SERVER_USERDATA_H
 
-#include <uv.h>
-#include <glib.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
+#include "../common/common.h"
 
-#include "tcpmap.h"
-#include "log.h"
-#include "config.h"
+typedef struct TcpControlConnectionUserData data_control_t;
+typedef struct TcpProxyConnectionUserData data_proxy_t;
 
-#ifndef loop
-#define loop uv_default_loop()
-#endif
+struct TcpControlConnectionUserData
+{
+    uv_tcp_t* control;              // control connection
+    map_t* idle_tcp;                // idle tcp from true client waiting for serve
+    map_t* all_tcp;                 // all tcp from proxy client
+    struct sockaddr_in addr;        // address of control connection
+};
 
-void allocer(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf);
-void free_self(uv_handle_t *handle);
-void free_with_data(uv_handle_t *handle);
-const char* filename(const char* path, char* output, size_t size);
+
+struct TcpProxyConnectionUserData
+{
+    data_control_t* data_control;
+    uv_tcp_t* partner;
+    struct sockaddr_in addr;
+};
 
 #endif

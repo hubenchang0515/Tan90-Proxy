@@ -5,7 +5,7 @@ all : libcheck
 	cd server && $(MAKE)
 
 libcheck :
-	$(LD) -luv `pkg-config --libs glib-2.0`
+	@$(LD) -luv `pkg-config --libs glib-2.0`
 
 clean :
 	cd common && $(MAKE) clean

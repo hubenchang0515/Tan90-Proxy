@@ -27,6 +27,7 @@ SOFTWARE.
 
 #include <uv.h>
 #include <glib.h>
+#include "userdata.h"
 
 void proxy_client_has_connection(uv_stream_t* tcp, int status);
 void proxy_client_proxy_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf);

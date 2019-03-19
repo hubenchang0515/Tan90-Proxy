@@ -28,6 +28,7 @@ SOFTWARE.
 #include <uv.h>
 #include <glib.h>
 #include "../common/tcpmap.h"
+#include "userdata.h"
 
 void true_client_has_connection(uv_stream_t* tcp, int status);
 void true_client_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf);

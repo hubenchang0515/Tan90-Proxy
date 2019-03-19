@@ -31,6 +31,7 @@ SOFTWARE.
 #include "../common/log.h"
 #include "../common/tcpmap.h"
 
+#include "userdata.h"
 #include "proxyclient.h"
 #include "trueclient.h"
 
