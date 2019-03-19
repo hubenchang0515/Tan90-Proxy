@@ -2,7 +2,10 @@
 #include <stdlib.h>
 #include <uv.h>
 
-#include "common.h"
+#include "../common/common.h"
+#include "../common/config.h"
+#include "../common/log.h"
+#include "../common/tcpmap.h"
 
 #include "proxyclient.h"
 #include "trueclient.h"
@@ -10,7 +13,27 @@
 int main(int argc, char* argv[])
 {
     /* Load config file */
-    config_t* config = config_load("server.config");
+    config_t* config = NULL;
+    if(argc == 1)
+    {
+        config = config_load("server.ini");
+    }
+    else if(argc == 2)
+    {
+        config = config_load(argv[1]);
+    }
+    else
+    {
+        char buff[1024];
+        filename(argv[0], buff, 1024);
+        log_printf(LOG_ERROR, "Error Console Parameters.");
+        log_printf(LOG_INFO, "Usage : %s [config-file] ", buff);
+        log_printf(LOG_INFO, "        %s ", buff);
+        log_printf(LOG_INFO, "        %s myconfig.ini ", buff);
+        return EXIT_FAILURE;
+    }
+
+    /* check */
     if(config == NULL)
     {
         log_printf(LOG_INFO, "Server exit.");
@@ -28,16 +51,16 @@ int main(int argc, char* argv[])
         char* to_ip = config_get_value(config, groups[i], "to_ip");
         int to_port = atoi(config_get_value(config, groups[i], "to_port"));
 
-        log_printf(LOG_INFO, "Proxy(%s) %s:%d ----- %s:%d", 
+        log_printf(LOG_INFO, "Config Proxy (%s) %s:%d ----- %s:%d", 
                     groups[i], from_ip, from_port, to_ip, to_port);
 
-        /* bind */
+        /* bind port to listen true client */
         int uv_err = 0;
-        uv_tcp_t* true_client = malloc(sizeof(uv_tcp_t));
-        uv_tcp_init(loop, true_client);
+        uv_tcp_t true_client;
+        uv_tcp_init(loop, &true_client);
         struct sockaddr_in addr;
         uv_ip4_addr(from_ip, from_port, &addr);
-        uv_err = uv_tcp_bind(true_client, (const struct sockaddr *)&addr, 0);
+        uv_err = uv_tcp_bind(&true_client, (const struct sockaddr *)&addr, 0);
         if(uv_err < 0)
         {
             log_printf(LOG_ERROR, "Bind %s:%d error : %s.",
@@ -45,10 +68,11 @@ int main(int argc, char* argv[])
             continue;
         }
 
-        uv_tcp_t* proxy_client = malloc(sizeof(uv_tcp_t));
-        uv_tcp_init(loop, proxy_client);
+        /* bind port to listen proxy client */
+        uv_tcp_t proxy_client;
+        uv_tcp_init(loop, &proxy_client);
         uv_ip4_addr(to_ip, to_port, &addr);
-        uv_err = uv_tcp_bind(proxy_client, (const struct sockaddr *)&addr, 0);
+        uv_err = uv_tcp_bind(&proxy_client, (const struct sockaddr *)&addr, 0);
         if(uv_err < 0)
         {
             log_printf(LOG_ERROR, "Bind %s:%d error : %s.",
@@ -57,14 +81,14 @@ int main(int argc, char* argv[])
         }
         
         /* listen */
-        uv_err = uv_listen((uv_stream_t*)true_client, 100, true_client_has_connection);
+        uv_err = uv_listen((uv_stream_t*)&true_client, 100, true_client_has_connection);
         if(uv_err < 0)
         {
             log_printf(LOG_ERROR, "Listen %s:%d error : %s.",
                         from_ip, from_port, uv_strerror(uv_err));
         }
 
-        uv_err = uv_listen((uv_stream_t*)proxy_client, 100, proxy_client_has_connection);
+        uv_err = uv_listen((uv_stream_t*)&proxy_client, 100, proxy_client_has_connection);
         if(uv_err < 0)
         {
             log_printf(LOG_ERROR, "Listen %s:%d error : %s.",
@@ -72,17 +96,12 @@ int main(int argc, char* argv[])
         }
 
         /* bind user data */
-        data_control_t* userdata = malloc(sizeof(data_control_t));
-        if(userdata == NULL)
-        {
-            log_printf(LOG_ERROR, "Malloc %s bytes error.", sizeof(data_control_t));
-            continue;
-        }
-        userdata->control = NULL;
-        userdata->idle_tcp = tcpmap_create_map();
-        userdata->all_tcp = tcpmap_create_map();
-        true_client->data = userdata;
-        proxy_client->data = userdata;
+        data_control_t userdata;
+        userdata.control = NULL;
+        userdata.idle_tcp = tcpmap_create_map();
+        userdata.all_tcp = tcpmap_create_map();
+        true_client.data = &userdata;
+        proxy_client.data = &userdata;
     }
     g_strfreev(groups);
 

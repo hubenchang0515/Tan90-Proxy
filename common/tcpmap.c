@@ -113,7 +113,7 @@ int tcpmap_set(map_t* map, uv_tcp_t* tcp1, uv_tcp_t* tcp2)
         return EXIT_FAILURE;
     }
 
-    g_hash_table_insert(map, tcp1, tcp2);
+    return g_hash_table_insert(map, tcp1, tcp2);
     //g_hash_table_insert(map, tcp2, tcp1);
 }
 

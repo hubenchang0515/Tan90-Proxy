@@ -1,4 +1,4 @@
-#include "common.h"
+#include "../common/common.h"
 #include "trueclient.h"
 
 void true_client_has_connection(uv_stream_t* tcp, int status)
@@ -75,7 +75,7 @@ void true_client_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
         free(buf->base);
         return;
     }
-    else    //if(nread > 0 && nread < buf->len) // read completely
+    else
     {
         uv_write_t* req = malloc(sizeof(uv_write_t));
         if(req == NULL)
@@ -94,21 +94,16 @@ void true_client_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
         req->data = new_buf;
         uv_write(req, (uv_stream_t*)data_proxy->partner, new_buf, 1, true_client_written);
     }
-    // else // read uncompletely
-    // {
-    //     uv_write_t* req = malloc(sizeof(uv_write_t));
-    //     if(req == NULL)
-    //     {
-    //         log_printf(LOG_ERROR, "Malloc %d bytes error.", sizeof(uv_write_t));
-    //         return;
-    //     }
-    //     uv_write(req, (uv_stream_t*)data_proxy->partner, buf, 1, true_client_written);
-    // }
 }
 
 
 void true_client_written(uv_write_t* req, int status)
 {
+    if(status < 0)
+    {
+        log_printf(LOG_ERROR, "Writting error : %s.", uv_strerror(status));
+        return;
+    }
     uv_buf_t* buf = req->data;
     free(buf->base);
     free(buf);

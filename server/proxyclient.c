@@ -23,7 +23,7 @@ SOFTWARE.
 ****************************************************************************************/
 
 
-#include "common.h"
+#include "../common/common.h"
 #include "proxyclient.h"
 
 
@@ -171,15 +171,10 @@ void proxy_client_control_read(uv_stream_t* stream, ssize_t nread, const uv_buf_
         /* Reset  */
         data->control = NULL;
     }
-    else if(nread < buf->len) // read completely
+    else
     {
 
     }
-    else // read uncompletely
-    {
-        
-    }
-
 
     free(buf->base);
 }
@@ -222,7 +217,7 @@ void proxy_client_proxy_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t*
         free(buf->base);
         return;
     }
-    else    // if(nread > 0 && nread < buf->len) // read completely
+    else
     {
         uv_write_t* req = malloc(sizeof(uv_write_t));
         if(req == NULL)
@@ -242,18 +237,6 @@ void proxy_client_proxy_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t*
         req->data = new_buf;
         uv_write(req, (uv_stream_t*)data->partner, new_buf, 1, proxy_client_proxy_written);
     }
-    // else // read uncompletely
-    // {
-    //     uv_write_t* req = malloc(sizeof(uv_write_t));
-    //     if(req == NULL)
-    //     {
-    //         log_printf(LOG_ERROR, "Malloc %d bytes error.", sizeof(uv_write_t));
-    //         return;
-    //     }
-    //     uv_write(req, (uv_stream_t*)data->partner, buf, 1, proxy_client_proxy_written);
-    // }
-
-    //free(buf->base);
 }
 
 
@@ -266,6 +249,11 @@ void proxy_client_proxy_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t*
 *********************************************************/
 void proxy_client_proxy_written(uv_write_t* req, int status)
 {
+    if(status < 0)
+    {
+        log_printf(LOG_ERROR, "Writting error : %s.", uv_strerror(status));
+        return;
+    }
     uv_buf_t* buf = req->data;
     free(buf->base);
     free(buf);
@@ -282,5 +270,10 @@ void proxy_client_proxy_written(uv_write_t* req, int status)
 *********************************************************/
 void proxy_client_control_written(uv_write_t* req, int status)
 {
-    
+    (void)req; // -Wno-unused-parameter
+    if(status < 0)
+    {
+        log_printf(LOG_ERROR, "Writting error : %s.", uv_strerror(status));
+        return;
+    }
 }

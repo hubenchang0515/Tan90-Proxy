@@ -31,9 +31,9 @@ SOFTWARE.
 #include <stdio.h>
 #include <string.h>
 
-#include "../common/log.h"
-#include "../common/config.h"
-#include "../common/tcpmap.h"
+#include "tcpmap.h"
+#include "log.h"
+#include "config.h"
 
 #ifndef loop
 #define loop uv_default_loop()
@@ -61,5 +61,6 @@ struct TcpProxyConnectionUserData
 void allocer(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf);
 void free_self(uv_handle_t *handle);
 void free_with_data(uv_handle_t *handle);
+const char* filename(const char* path, char* output, size_t size);
 
 #endif
