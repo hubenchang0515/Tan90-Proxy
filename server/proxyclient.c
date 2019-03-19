@@ -25,6 +25,7 @@ SOFTWARE.
 
 #include "../common/common.h"
 #include "proxyclient.h"
+#include "trueclient.h"
 
 
 /*********************************************************
@@ -107,6 +108,7 @@ void proxy_client_has_connection(uv_stream_t* tcp, int status)
 
         /* regist read call-back */
         uv_read_start((uv_stream_t*)connection, allocer, proxy_client_proxy_read);
+        uv_read_start((uv_stream_t*)(data_proxy->partner), allocer, true_client_read);
     }
 }
 
@@ -215,7 +217,7 @@ void proxy_client_proxy_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t*
         /* disconnect */
         if(data->partner != NULL)
         {
-            uv_close((uv_handle_t*)(data->partner), free_self);
+            uv_close((uv_handle_t*)(data->partner), free_with_data);
         }
         uv_close((uv_handle_t*)stream, free_with_data);
     }

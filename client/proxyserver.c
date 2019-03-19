@@ -137,7 +137,7 @@ void proxy_server_proxy_connected(uv_connect_t* req, int status)
                             true_server_proxy_connected);
 
             // registe read callback
-            uv_read_start((uv_stream_t*)(req->handle), allocer, proxy_server_proxy_read);
+            //uv_read_start((uv_stream_t*)(req->handle), allocer, proxy_server_proxy_read);
     }
     
     free(req);
@@ -156,15 +156,15 @@ void proxy_server_control_read(uv_stream_t* stream, ssize_t nread, const uv_buf_
     data_control_t* data = stream->data;
     if(nread < 0 || nread == EOF) // loss control connect
     {
-        if(nread < 0)
+        if(nread == UV_EOF)
         {
-            log_printf(LOG_ERROR, "Exceptionally loss control connection from %s:%d.",
+            log_printf(LOG_INFO, "Loss control connection from %s:%d.",
                             inet_ntoa(data->proxy_server_addr.sin_addr), 
                             htons(data->proxy_server_addr.sin_port));
         }
         else
         {
-            log_printf(LOG_INFO, "Loss control connection from %s:%d.",
+            log_printf(LOG_ERROR, "Exceptionally loss control connection from %s:%d.",
                             inet_ntoa(data->proxy_server_addr.sin_addr), 
                             htons(data->proxy_server_addr.sin_port));
         }

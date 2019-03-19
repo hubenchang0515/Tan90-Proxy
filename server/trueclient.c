@@ -54,7 +54,7 @@ void true_client_has_connection(uv_stream_t* tcp, int status)
     tcpmap_set(data_control->idle_tcp, connection, NULL);
 
     /* regist read call-back */
-    uv_read_start((uv_stream_t*) connection, allocer, true_client_read);
+    //uv_read_start((uv_stream_t*) connection, allocer, true_client_read);
 
     /* tell proxy client */
     uv_write_t* req = malloc(sizeof(uv_write_t));
