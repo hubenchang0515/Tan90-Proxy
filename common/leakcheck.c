@@ -4,6 +4,7 @@
 #include <string.h>
 #include <signal.h>
 #include <stdint.h>
+#include <limits.h>
 
 /* 内存分配记录表节点 */
 typedef struct lc_detail_node_t lc_detail_node_t;
@@ -205,7 +206,7 @@ void lc_detail(void)
 	for(; curr != NULL; curr = curr->next)
 	{
 		
-		#if SIZE_MAX == UNSIGNED_LONG_MAX
+		#if SIZE_MAX == ULONG_MAX
 			printf("In file <%s> line <%lu> function <%s> : leak %lu bytes\n", curr->file, curr->line, curr->function, curr->bytes);
 		#else
 			printf("In file <%s> line <%u> function <%s> : leak %u bytes\n", curr->file, curr->line, curr->function, curr->bytes);
@@ -213,7 +214,7 @@ void lc_detail(void)
 		times += 1;
 		bytes += curr->bytes;
 	}
-	#if SIZE_MAX == UNSIGNED_LONG_MAX
+	#if SIZE_MAX == ULONG_MAX
 			printf("Total : %lu times %lu bytes.\n\n", times, bytes);
 		#else
 			printf("Total : %u times %u bytes.\n\n", times, bytes);
@@ -233,7 +234,7 @@ void lc_statistic(void)
 	for(; curr != NULL; curr = curr->next)
 	{
 		
-		#if SIZE_MAX == UNSIGNED_LONG_MAX
+		#if SIZE_MAX == ULONG_MAX
 			printf("In file <%s> line <%lu> : leak %lu times %lu bytes\n", curr->file, curr->line, curr->times, curr->bytes);
 		#else
 			printf("In file <%s> line <%u> : leak %u times %u bytes\n", curr->file, curr->line, curr->times, curr->bytes);
@@ -243,7 +244,7 @@ void lc_statistic(void)
 		bytes += curr->bytes;
 	}
 	
-	#if SIZE_MAX == UNSIGNED_LONG_MAX
+	#if SIZE_MAX == ULONG_MAX
 		printf("Total : %lu times %lu bytes.\n\n", times, bytes);
 	#else
 		printf("Total : %u times %u bytes.\n\n", times, bytes);
