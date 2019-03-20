@@ -28,6 +28,7 @@ SOFTWARE.
 #include "../common/common.h"
 #include "userdata.h"
 
+void proxy_server_control_connect_timer(uv_timer_t *handle);
 void proxy_server_control_connected(uv_connect_t* req, int status);
 void proxy_server_proxy_connected(uv_connect_t* req, int status);
 void proxy_server_control_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf);

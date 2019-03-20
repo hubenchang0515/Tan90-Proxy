@@ -79,46 +79,34 @@ int main(int argc, char* argv[])
                     groups[i], proxy_server_ip, proxy_server_port, 
                     true_server_ip, true_server_port);
 
-        /* create control connection */
-        uv_connect_t* connect_req = malloc(sizeof(uv_connect_t));
-        if(connect_req == NULL)
+        /* store address */
+        data_timer_t* data_timer = malloc(sizeof(data_timer_t));
+        if(data_timer == NULL)
         {
-            log_printf(LOG_ERROR, "Malloc %d bytes error.", sizeof(uv_connect_t));
-            break;
+            log_printf(LOG_ERROR, "Malloc %d bytes error.", sizeof(data_timer_t));
+            continue;
         }
-        uv_tcp_t* control_connection = malloc(sizeof(uv_tcp_t));
-        if(control_connection == NULL)
-        {
-            free(connect_req);
-            log_printf(LOG_ERROR, "Malloc %d bytes error.", sizeof(uv_tcp_t));
-            break;
-        }
-        uv_tcp_init(loop, control_connection);
+        uv_ip4_addr(proxy_server_ip, proxy_server_port, &(data_timer->proxy_server_addr));
+        uv_ip4_addr(true_server_ip, true_server_port, &(data_timer->true_server_addr));
         
-        /* bind user data */
-        data_control_t* userdata = malloc(sizeof(data_control_t));
-        if(userdata == NULL)
+        /* create timer */
+        uv_timer_t* timer = malloc(sizeof(uv_timer_t));
+        if(timer == NULL)
         {
-            free(control_connection);
-            free(connect_req);
-            log_printf(LOG_ERROR, "Malloc %d bytes error.", sizeof(uv_tcp_t));
-            break;
+            log_printf(LOG_ERROR, "Malloc %d bytes error.", sizeof(uv_timer_t));
+            free(data_timer);
+            continue;
         }
-        userdata->req = connect_req;
-        userdata->all_tcp = tcpmap_create_map();
-        userdata->idle_tcp = tcpmap_create_map();
-        userdata->control = NULL;
-        connect_req->data = userdata;
-        control_connection->data = userdata;
-
-        /* connect to proxy server */
-        uv_ip4_addr(proxy_server_ip, proxy_server_port, &(userdata->proxy_server_addr));
-        uv_tcp_connect(connect_req, control_connection, 
-                        (const struct sockaddr*)&(userdata->proxy_server_addr), 
-                        proxy_server_control_connected);
-
-        /* save true server ip:port */
-        uv_ip4_addr(true_server_ip, true_server_port, &(userdata->true_server_addr));
+        int uv_err = uv_timer_init(loop, timer);
+        if(uv_err < 0)
+        {
+            free(timer);
+            free(data_timer);
+            log_printf(LOG_ERROR, "Create timer error : %s.", uv_strerror(uv_err));
+        }
+        data_timer->timer = timer;
+        timer->data = data_timer;
+        uv_timer_start(timer, proxy_server_control_connect_timer, 1000, 0);
     }
     g_strfreev(groups);
 

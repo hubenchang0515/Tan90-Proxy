@@ -29,10 +29,11 @@ SOFTWARE.
 
 typedef struct TcpControlConnectionUserData data_control_t;
 typedef struct TcpProxyConnectionUserData data_proxy_t;
+typedef struct TcpControlConnectionTimerUserData data_timer_t;
 
 struct TcpControlConnectionUserData
 {
-    uv_connect_t* req;                      // req
+    uv_timer_t* timer;                      // timer
     uv_tcp_t* control;                      // control connection
     map_t* all_tcp;                         // all tcp to proxy server
     map_t* idle_tcp;                        // idel tcp to proxy server
@@ -43,9 +44,15 @@ struct TcpControlConnectionUserData
 
 struct TcpProxyConnectionUserData
 {
-    uv_connect_t* req;
     data_control_t* data_control;
     uv_tcp_t* partner;
+};
+
+struct TcpControlConnectionTimerUserData
+{
+    uv_timer_t* timer;
+    struct sockaddr_in proxy_server_addr;   // proxy server address
+    struct sockaddr_in true_server_addr;    // true server address
 };
 
 #endif

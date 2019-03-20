@@ -25,6 +25,58 @@ SOFTWARE.
 #include "proxyserver.h"
 #include "trueserver.h"
 
+
+/*********************************************************
+ * Function     : Create control connection to proxy server
+ * Parameters   : req - uv_connect_t*
+ *                status - status of connection
+ * Return       : void
+*********************************************************/
+void proxy_server_control_connect_timer(uv_timer_t *handle)
+{
+    data_timer_t* data_timer = handle->data;
+    /* create control connection */
+    uv_connect_t* connect_req = malloc(sizeof(uv_connect_t));
+    if(connect_req == NULL)
+    {
+        log_printf(LOG_ERROR, "Malloc %d bytes error.", sizeof(uv_connect_t));
+        return;
+    }
+    uv_tcp_t* control_connection = malloc(sizeof(uv_tcp_t));
+    if(control_connection == NULL)
+    {
+        free(connect_req);
+        log_printf(LOG_ERROR, "Malloc %d bytes error.", sizeof(uv_tcp_t));
+        return;
+    }
+    uv_tcp_init(loop, control_connection);
+    
+    /* bind user data */
+    data_control_t* userdata = malloc(sizeof(data_control_t));
+    if(userdata == NULL)
+    {
+        free(control_connection);
+        free(connect_req);
+        log_printf(LOG_ERROR, "Malloc %d bytes error.", sizeof(uv_tcp_t));
+        return;
+    }
+    userdata->timer = data_timer->timer;
+    userdata->proxy_server_addr = data_timer->proxy_server_addr;
+    userdata->true_server_addr = data_timer->true_server_addr;
+    userdata->all_tcp = tcpmap_create_map();
+    userdata->idle_tcp = tcpmap_create_map();
+    userdata->control = NULL;
+    connect_req->data = userdata;
+    control_connection->data = userdata;
+
+    /* connect to proxy server */
+    uv_tcp_connect(connect_req, control_connection, 
+                    (const struct sockaddr*)&(userdata->proxy_server_addr), 
+                    proxy_server_control_connected);
+}
+
+
+
 /*********************************************************
  * Function     : Create control connection to proxy server
  * Parameters   : req - uv_connect_t*
@@ -33,13 +85,14 @@ SOFTWARE.
 *********************************************************/
 void proxy_server_control_connected(uv_connect_t* req, int status)
 {
+    data_control_t* data_control = req->handle->data;
     if(status < 0)
     {
         log_printf(LOG_ERROR, "Connection error : %s.", uv_strerror(status));
+        uv_timer_start(data_control->timer, proxy_server_control_connect_timer, 1000, 0);
         return;
     }
     
-    data_control_t* data_control = req->handle->data;
     struct sockaddr_in addr;
     int len = sizeof(addr);
     uv_tcp_getsockname((uv_tcp_t*)req->handle, (struct sockaddr*)&addr, &len);
@@ -127,7 +180,6 @@ void proxy_server_proxy_connected(uv_connect_t* req, int status)
             }
             uv_tcp_init(loop, true_server);
 
-            new_data_proxy->req = connect_req;
             new_data_proxy->data_control = data_control;
             new_data_proxy->partner = NULL;
             connect_req->data = new_data_proxy;
@@ -135,9 +187,6 @@ void proxy_server_proxy_connected(uv_connect_t* req, int status)
             uv_tcp_connect(connect_req, true_server, 
                             (const struct sockaddr *)&(data_control->true_server_addr), 
                             true_server_proxy_connected);
-
-            // registe read callback
-            //uv_read_start((uv_stream_t*)(req->handle), allocer, proxy_server_proxy_read);
     }
     
     free(req);
@@ -198,6 +247,7 @@ void proxy_server_control_read(uv_stream_t* stream, ssize_t nread, const uv_buf_
             and will be reused so not free */
         uv_close((uv_handle_t*)(stream), NULL);
         free(buf->base);
+        uv_timer_start(data->timer, proxy_server_control_connect_timer, 1000, 0);
     }
     else
     {
@@ -231,7 +281,6 @@ void proxy_server_control_read(uv_stream_t* stream, ssize_t nread, const uv_buf_
                 uv_tcp_init(loop, proxy_server);
 
                 /* connect to proxy server */
-                data_proxy->req = connect_req;
                 data_proxy->data_control = data;
                 data_proxy->partner = NULL;
                 connect_req->data = data_proxy;
