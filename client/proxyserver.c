@@ -197,6 +197,7 @@ void proxy_server_control_read(uv_stream_t* stream, ssize_t nread, const uv_buf_
             control connection uv_tcp_t was defined in main
             and will be reused so not free */
         uv_close((uv_handle_t*)(stream), NULL);
+        free(buf->base);
     }
     else
     {
@@ -246,6 +247,7 @@ void proxy_server_control_read(uv_stream_t* stream, ssize_t nread, const uv_buf_
                             (unsigned char)buf->base[0]);
             }
         }
+        free(buf->base);
     }
     
 }
@@ -260,7 +262,6 @@ void proxy_server_control_read(uv_stream_t* stream, ssize_t nread, const uv_buf_
 *********************************************************/
 void proxy_server_proxy_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf)
 {
-    log_printf(LOG_WARNING, "Proxy data.");
     data_proxy_t* data_proxy = stream->data;
     data_control_t* data_control = data_proxy->data_control;
     if(nread < 0 || nread == UV_EOF)
@@ -285,6 +286,7 @@ void proxy_server_proxy_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t*
         }
         tcpmap_remove(data_control->idle_tcp, (uv_tcp_t*)(stream));
         tcpmap_remove(data_control->all_tcp, (uv_tcp_t*)(stream));
+        free(buf->base);
     }
     else if(data_proxy->partner == NULL)
     {

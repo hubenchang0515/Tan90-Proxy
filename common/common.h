@@ -35,6 +35,10 @@ SOFTWARE.
 #include "log.h"
 #include "config.h"
 
+#ifdef DEBUG
+    #include "leakcheck.h"
+#endif
+
 #ifndef loop
 #define loop uv_default_loop()
 #endif

@@ -149,7 +149,10 @@ void proxy_client_control_read(uv_stream_t* stream, ssize_t nread, const uv_buf_
             /* disconnect */
             log_printf(LOG_INFO, "Disconnect proxy connection from proxy client %s:%d.",
                         inet_ntoa(data_proxy->addr.sin_addr), htons(data_proxy->addr.sin_port));
-            uv_close((uv_handle_t*)(data_proxy->partner), free_with_data);
+            if(data_proxy->partner != NULL)
+            {
+                uv_close((uv_handle_t*)(data_proxy->partner), free_with_data);
+            }
             uv_close((uv_handle_t*)proxy_client_proxy, free_with_data);
         }
         g_free(keys);
@@ -195,7 +198,6 @@ void proxy_client_control_read(uv_stream_t* stream, ssize_t nread, const uv_buf_
 *********************************************************/
 void proxy_client_proxy_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf)
 {
-    log_printf(LOG_WARNING, "Proxy data.");
     data_proxy_t* data = stream->data;
     data_control_t* data_control = data->data_control;
     if(nread < 0 || nread == UV_EOF)
@@ -221,6 +223,7 @@ void proxy_client_proxy_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t*
             uv_close((uv_handle_t*)(data->partner), free_with_data);
         }
         uv_close((uv_handle_t*)stream, free_with_data);
+        free(buf->base);
     }
     else if(data->partner == NULL) // hasn't been bind to true client
     {
@@ -265,6 +268,11 @@ void proxy_client_proxy_written(uv_write_t* req, int status)
         log_printf(LOG_ERROR, "Writting error : %s.", uv_strerror(status));
         return;
     }
+    else
+    {
+        log_printf(LOG_INFO, "written free");
+    }
+    
     uv_buf_t* buf = req->data;
     free(buf->base);
     free(buf);
@@ -286,6 +294,10 @@ void proxy_client_control_written(uv_write_t* req, int status)
     {
         log_printf(LOG_ERROR, "Writting error : %s.", uv_strerror(status));
         return;
+    }
+    else
+    {
+        log_printf(LOG_INFO, "written free");
     }
     uv_buf_t* buf = req->data;
     free(buf->base);

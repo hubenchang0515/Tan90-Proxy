@@ -29,6 +29,10 @@ SOFTWARE.
 #include <errno.h>
 #include <string.h>
 
+#ifdef DEBUG
+    #include "leakcheck.h"
+#endif
+
 static FILE* log_file = NULL;
 
 static void log_info(const char* fmt, va_list args);

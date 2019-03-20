@@ -6,12 +6,15 @@ all : libcheck
 	cd client && $(MAKE)
 
 server : libcheck
+	cd server && $(MAKE) clean
 	cd server && $(MAKE)
 
 client : libcheck
+	cd client && $(MAKE) clean
 	cd client && $(MAKE)
 
 common : libcheck
+	cd common && $(MAKE) clean
 	cd common && $(MAKE)
 
 libcheck :

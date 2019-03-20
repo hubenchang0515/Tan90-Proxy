@@ -73,7 +73,7 @@ void true_server_proxy_connected(uv_connect_t* req, int status)
         uv_read_start((uv_stream_t*)(data_proxy->partner), allocer, proxy_server_proxy_read);
     }
     
-    
+    free(req);
 }
 
 
@@ -86,7 +86,6 @@ void true_server_proxy_connected(uv_connect_t* req, int status)
 *********************************************************/
 void true_server_proxy_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
 {
-    log_printf(LOG_WARNING, "Proxy data.");
     data_proxy_t* data_proxy = stream->data;
     data_control_t* data_control = data_proxy->data_control;
     if(nread < 0 || nread == UV_EOF)
@@ -110,6 +109,7 @@ void true_server_proxy_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *
             uv_close((uv_handle_t*)(data_proxy->partner), free_with_data);
             tcpmap_remove(data_control->all_tcp, (uv_tcp_t*)(data_proxy->partner));
         }
+        free(buf->base);
     }
     else if(data_proxy == NULL)
     {
