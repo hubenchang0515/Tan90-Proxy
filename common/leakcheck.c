@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <signal.h>
 
 /* 内存分配记录表节点 */
 typedef struct lc_detail_node_t lc_detail_node_t;
@@ -229,4 +230,31 @@ void lc_statistic(void)
 		bytes += curr->bytes;
 	}
 	printf("Total : %lu times %lu bytes.\n\n", times, bytes);
+}
+
+
+/* signal callback */
+void lc_signal_statistic(int sig)
+{
+	(void)sig;
+	lc_statistic();
+	signal(sig, lc_signal_statistic);
+}
+
+void lc_signal_detail(int sig)
+{
+	(void)sig;
+	lc_detail();
+	signal(sig, lc_signal_detail);
+}
+
+/* registe signal */
+void lc_registe_statistic(int sig)
+{
+	signal(sig, lc_signal_statistic);
+}
+
+void lc_registe_detail(int sig)
+{
+	signal(sig, lc_signal_statistic);
 }

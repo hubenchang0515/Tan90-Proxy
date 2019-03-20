@@ -162,10 +162,7 @@ void true_client_proxy_written(uv_write_t* req, int status)
         log_printf(LOG_ERROR, "Writting error : %s.", uv_strerror(status));
         return;
     }
-    else
-    {
-        log_printf(LOG_INFO, "written free");
-    }
+    
     uv_buf_t* buf = req->data;
     free(buf->base);
     free(buf);

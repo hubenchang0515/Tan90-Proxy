@@ -1,9 +1,14 @@
-.PHONY : all clean libcheck server client common
+.PHONY : all debug clean libcheck server client common 
 
 all : libcheck
 	cd common && $(MAKE)
 	cd server && $(MAKE)
 	cd client && $(MAKE)
+
+debug : libcheck
+	cd common && $(MAKE) opt=debug
+	cd server && $(MAKE) opt=debug
+	cd client && $(MAKE) opt=debug
 
 server : libcheck
 	cd server && $(MAKE) clean

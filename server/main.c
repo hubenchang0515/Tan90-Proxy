@@ -148,6 +148,10 @@ int main(int argc, char* argv[])
     }
     g_strfreev(groups);
 
+    #ifdef DEBUG
+        lc_registe_statistic(SIGINT);
+    #endif
+
     return uv_run(loop, UV_RUN_DEFAULT);
 }
 

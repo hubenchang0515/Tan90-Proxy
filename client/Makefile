@@ -1,8 +1,14 @@
 CC = gcc
-CFLAGS = -std=c99 -W -Wall -Wextra -O3 `pkg-config --cflags glib-2.0`
-LDFLAGS = -ltan90common -luv `pkg-config --libs glib-2.0` -L../common 
 TARGET = ../tan90-client
 TARGET_O = main.o proxyserver.o trueserver.o
+
+ifeq ($(opt), debug)
+	CFLAGS = -std=c99 -W -Wall -Wextra -O3 `pkg-config --cflags glib-2.0` -DDEBUG -g
+	LDFLAGS = -ltan90common -luv `pkg-config --libs glib-2.0` -L../common -g
+else
+	CFLAGS = -std=c99 -W -Wall -Wextra -O3 `pkg-config --cflags glib-2.0` 
+	LDFLAGS = -ltan90common -luv `pkg-config --libs glib-2.0` -L../common 
+endif
 
 .PHONY : all clean
 

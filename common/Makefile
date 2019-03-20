@@ -1,7 +1,12 @@
 CC = gcc
-CFLAGS = -std=c99 -W -Wall -Wextra -O3 `pkg-config --cflags glib-2.0`
 TARGET_A = libtan90common.a
 TARGET_O = log.o tcpmap.o config.o common.o leakcheck.o
+
+ifeq ($(opt), debug)
+	CFLAGS = -std=c99 -W -Wall -Wextra -O3 `pkg-config --cflags glib-2.0` -DDEBUG -g
+else
+	CFLAGS = -std=c99 -W -Wall -Wextra -O3 `pkg-config --cflags glib-2.0` 
+endif
 
 .PHONY : all clean
 
