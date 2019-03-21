@@ -7,14 +7,14 @@ NAT acorss proxy server - NAT穿透代理服务器
 
 ## Build  
 
-|Input              | Description                                                                   |
-| :-                | :-                                                                            |
-|**`make`**         |   build *libcommon.a* , *tan90-server* and *tan90-client* by **release** mode |
-|**`make debug`**   |   build *libcommon.a* , *tan90-server* and *tan90-client* by **debug** mode   |
-|**`make clean`**   |   remove all *.o* and *libcommon.a*                                           |
-|**`make commom`**  |   build *libcommon.a* by **release** mode                                     |
-|**`make server`**  |   build *tan90-server* by **release** mode                                    |
-|**`make client`**  |   build *tan90-client* by **release** mode                                    |
+|Input              | Description                                                                           |
+| :-                | :-                                                                                    |
+|**`make`**         |   build *libtan90common.a* , *tan90-server* and *tan90-client* by **release** mode    |
+|**`make debug`**   |   build *libtan90common.a* , *tan90-server* and *tan90-client* by **debug** mode      |
+|**`make clean`**   |   remove all *.o* and *libtan90common.a*                                              |
+|**`make commom`**  |   build *libtan90common.a* by **release** mode                                        |
+|**`make server`**  |   build *tan90-server* by **release** mode                                            |
+|**`make client`**  |   build *tan90-client* by **release** mode                                            |
 
 ## Usage
 ![Image](./image/pic01.png)
