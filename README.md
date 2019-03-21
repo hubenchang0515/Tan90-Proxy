@@ -19,7 +19,7 @@ NAT acorss proxy server - NAT穿透代理服务器
 ## Usage
 ![Image](./image/pic01.png)
 
-```bash
+```ini
 # server.ini
 [Proxy of Nginx]
 true_client_ip = 0.0.0.0
@@ -34,16 +34,16 @@ proxy_client_ip = 0.0.0.0
 proxy_client_port = 8103
 ```
 
-```bash
+```ini
 # client.ini
 [Proxy of Nginx]
-proxy_server_ip = 233.233.233.233
+proxy_server_ip = 233.233.233.233   # Change this to the IP of your VPS
 proxy_server_port = 8102
 true_server_ip = 0.0.0.0
 true_server_port = 80
 
 [Proxy of Minecraft]
-proxy_server_ip = 233.233.233.233
+proxy_server_ip = 233.233.233.233   # Change this to the IP of your VPS
 proxy_server_port = 8103
 true_server_ip = 0.0.0.0
 true_server_port = 25565
