@@ -16,6 +16,8 @@ NAT acorss proxy server - NAT穿透代理服务器
 |**`make server`**  |   build *tan90-server* by **release** mode                                            |
 |**`make client`**  |   build *tan90-client* by **release** mode                                            |
 
+>> On Windows , suggest using `Msys2` to build.
+
 ## Usage
 ![Image](./image/pic01.png)
 
