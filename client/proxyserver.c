@@ -96,6 +96,8 @@ void proxy_server_control_connected(uv_connect_t* req, int status)
     struct sockaddr_in addr;
     int len = sizeof(addr);
     uv_tcp_getsockname((uv_tcp_t*)req->handle, (struct sockaddr*)&addr, &len);
+    char ip[32];
+    strncpy(ip, inet_ntoa(addr.sin_addr), 32);
 
     if(data_control->control == NULL) // control connection 
     {
@@ -104,14 +106,17 @@ void proxy_server_control_connected(uv_connect_t* req, int status)
         log_printf(LOG_INFO, "Connected control connection to %s:%d by %s:%d.",
                     inet_ntoa(data_control->proxy_server_addr.sin_addr), 
                     htons(data_control->proxy_server_addr.sin_port),
-                    inet_ntoa(addr.sin_addr), htons(addr.sin_port));
+                    ip, htons(addr.sin_port));
 
         /* registe read */
         uv_read_start((uv_stream_t*)req->handle, allocer, proxy_server_control_read); 
     }
     else // proxy connection
     {
-        log_printf(LOG_ERROR, "Connected control connection to %s:%d by %s:%d but control connection is exist.");
+        log_printf(LOG_ERROR, "Connected control connection to %s:%d by %s:%d but control connection is exist.",
+                    inet_ntoa(data_control->proxy_server_addr.sin_addr), 
+                    htons(data_control->proxy_server_addr.sin_port),
+                    ip, htons(addr.sin_port));
     }
     free(req);
 }
@@ -137,20 +142,22 @@ void proxy_server_proxy_connected(uv_connect_t* req, int status)
     struct sockaddr_in addr;
     int len = sizeof(addr);
     uv_tcp_getsockname((uv_tcp_t*)req->handle, (struct sockaddr*)&addr, &len);
+    char ip[32];
+    strncpy(ip, inet_ntoa(addr.sin_addr), 32);
 
     if(data_control->control == NULL)
     {
         log_printf(LOG_ERROR, "Connected proxy connection to proxy server %s:%d by %s:%d but no control connection.",
                     inet_ntoa(data_control->proxy_server_addr.sin_addr), 
                     htons(data_control->proxy_server_addr.sin_port),
-                    inet_ntoa(addr.sin_addr), htons(addr.sin_port));
+                    ip, htons(addr.sin_port));
     }
     else
     {
         log_printf(LOG_INFO, "Connected proxy connection to proxy server %s:%d by %s:%d.",
                     inet_ntoa(data_control->proxy_server_addr.sin_addr), 
                     htons(data_control->proxy_server_addr.sin_port),
-                    inet_ntoa(addr.sin_addr), htons(addr.sin_port));
+                    ip, htons(addr.sin_port));
         
         // store
         tcpmap_set(data_control->all_tcp, (uv_tcp_t*)(req->handle), NULL);

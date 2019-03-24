@@ -45,6 +45,8 @@ void true_server_proxy_connected(uv_connect_t* req, int status)
     struct sockaddr_in addr;
     int len = sizeof(addr);
     uv_tcp_getsockname((uv_tcp_t*)req->handle, (struct sockaddr*)&addr, &len);
+    char ip[32];
+    strncpy(ip, inet_ntoa(addr.sin_addr), 32);
     
     data_proxy->partner = tcpmap_get_first_key(data_control->idle_tcp);
     if(data_proxy->partner == NULL)
@@ -52,14 +54,14 @@ void true_server_proxy_connected(uv_connect_t* req, int status)
         log_printf(LOG_INFO, "Connected proxy connection to true server %s:%d by %s:%d but no idle true server connection.",
                     inet_ntoa(data_control->true_server_addr.sin_addr), 
                     htons(data_control->true_server_addr.sin_port),
-                    inet_ntoa(addr.sin_addr), htons(addr.sin_port));
+                    ip, htons(addr.sin_port));
     }
     else
     {
         log_printf(LOG_INFO, "Connected proxy connection to true server %s:%d by %s:%d.",
                     inet_ntoa(data_control->true_server_addr.sin_addr), 
                     htons(data_control->true_server_addr.sin_port),
-                    inet_ntoa(addr.sin_addr), htons(addr.sin_port));
+                    ip, htons(addr.sin_port));
 
         // remove from waiting queue
         tcpmap_remove(data_control->idle_tcp, data_proxy->partner);
