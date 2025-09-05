@@ -46,6 +46,7 @@ struct TcpProxyConnectionUserData
 {
     data_control_t* data_control;
     uv_tcp_t* partner;
+    int shutdown;
 };
 
 struct TcpControlConnectionTimerUserData

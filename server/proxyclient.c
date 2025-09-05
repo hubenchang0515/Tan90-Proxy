@@ -82,6 +82,7 @@ void proxy_client_has_connection(uv_stream_t* tcp, int status)
         connection->data = data_proxy;
         data_proxy->data_control = data_control;
         data_proxy->partner = NULL;
+        data_proxy->shutdown = 0;
         
         /* bind to true client */
         data_proxy->partner = tcpmap_get_first_key(data_control->idle_tcp);
@@ -212,17 +213,21 @@ void proxy_client_proxy_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t*
             log_printf(LOG_ERROR, "Exceptionally loss connection from proxy client %s:%d.",
                             inet_ntoa(data->addr.sin_addr), htons(data->addr.sin_port));
         }
-        
-        
-        /* remove from map */
-        tcpmap_remove(data_control->all_tcp, (uv_tcp_t*)stream);
 
-        /* disconnect */
         if(data->partner != NULL)
         {
-            uv_close((uv_handle_t*)(data->partner), free_with_data);
+            uv_shutdown_t* req = malloc(sizeof(uv_shutdown_t));
+            req->data = data->partner;
+            uv_shutdown(req, (uv_stream_t*)(data->partner), true_client_proxy_shutdown);
         }
-        uv_close((uv_handle_t*)stream, free_with_data);
+        
+        if (data->shutdown)
+        {
+            /* remove from map */
+            tcpmap_remove(data_control->all_tcp, (uv_tcp_t*)stream);
+            // uv_close((uv_handle_t*)stream, free_with_data);
+        }
+        
         free(buf->base);
     }
     else if(data->partner == NULL) // hasn't been bind to true client
@@ -295,5 +300,27 @@ void proxy_client_control_written(uv_write_t* req, int status)
     uv_buf_t* buf = req->data;
     free(buf->base);
     free(buf);
+    free(req);
+}
+
+/*********************************************************
+ * Function     : Callback function while shutdown 
+ *                connection to proxy client
+ * Parameters   : req - uv_shutdown_t*
+ *                status - status of writing
+ * Return       : void
+*********************************************************/
+void proxy_client_proxy_shutdown(uv_shutdown_t* req, int status)
+{
+    if(status < 0)
+    {
+        log_printf(LOG_ERROR, "Shutdown error : %s.", uv_strerror(status));
+        return;
+    }
+    
+    uv_handle_t* partner = (uv_handle_t*)req->data;
+    data_proxy_t* data_proxy = (data_proxy_t*)partner->data;
+    data_proxy->shutdown = 1;
+
     free(req);
 }

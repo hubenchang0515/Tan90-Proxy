@@ -104,13 +104,20 @@ void true_server_proxy_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *
                             inet_ntoa(data_control->proxy_server_addr.sin_addr), 
                             htons(data_control->proxy_server_addr.sin_port));
         }
-        
-        uv_close((uv_handle_t*)(stream), free_with_data);
+
         if(data_proxy->partner != NULL)
         {
-            uv_close((uv_handle_t*)(data_proxy->partner), free_with_data);
-            tcpmap_remove(data_control->all_tcp, (uv_tcp_t*)(data_proxy->partner));
+            uv_shutdown_t* req = malloc(sizeof(uv_shutdown_t));
+            req->data = data_proxy->partner;
+            uv_shutdown(req, (uv_stream_t*)(data_proxy->partner), true_server_proxy_shutdown);
         }
+        
+        if (data_proxy->shutdown)
+        {
+            tcpmap_remove(data_control->all_tcp, (uv_tcp_t*)(data_proxy->partner));
+            // uv_close((uv_handle_t*)(stream), free_with_data);
+        }
+        
         free(buf->base);
     }
     else if(data_proxy == NULL)
@@ -159,5 +166,27 @@ void true_server_proxy_written(uv_write_t* req, int status)
     uv_buf_t* buf = req->data;
     free(buf->base);
     free(buf);
+    free(req);
+}
+
+/*********************************************************
+ * Function     : Callback function while shutdown 
+ *                connection to proxy server
+ * Parameters   : req - uv_shutdown_t*
+ *                status - status of writing
+ * Return       : void
+*********************************************************/
+void true_server_proxy_shutdown(uv_shutdown_t* req, int status)
+{
+    if(status < 0)
+    {
+        log_printf(LOG_ERROR, "Shutdown error : %s.", uv_strerror(status));
+        return;
+    }
+    
+    uv_handle_t* partner = (uv_handle_t*)req->data;
+    data_proxy_t* data_proxy = (data_proxy_t*)partner->data;
+    data_proxy->shutdown = 1;
+
     free(req);
 }

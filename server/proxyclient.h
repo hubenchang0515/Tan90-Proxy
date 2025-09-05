@@ -34,5 +34,6 @@ void proxy_client_proxy_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t*
 void proxy_client_control_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf);
 void proxy_client_proxy_written(uv_write_t* req, int status);
 void proxy_client_control_written(uv_write_t* req, int status);
+void proxy_client_proxy_shutdown(uv_shutdown_t* req, int status);
 
 #endif
