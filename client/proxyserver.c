@@ -108,7 +108,7 @@ void proxy_server_control_connected(uv_connect_t* req, int status)
                     htons(data_control->proxy_server_addr.sin_port),
                     ip, htons(addr.sin_port));
 
-        /* registe read */
+        /* register read */
         uv_read_start((uv_stream_t*)req->handle, allocer, proxy_server_control_read); 
     }
     else // proxy connection
@@ -162,6 +162,9 @@ void proxy_server_proxy_connected(uv_connect_t* req, int status)
         // store
         tcpmap_set(data_control->all_tcp, (uv_tcp_t*)(req->handle), NULL);
         tcpmap_set(data_control->idle_tcp, (uv_tcp_t*)(req->handle), NULL);
+
+        // keepalive
+        uv_tcp_keepalive((uv_tcp_t*)req->handle, 1, 60);
 
         // connect to true server
         uv_connect_t* connect_req = malloc(sizeof(uv_connect_t));
@@ -332,7 +335,7 @@ void proxy_server_proxy_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t*
         }
         else // error
         {
-            log_printf(LOG_ERROR, "Exceptionally loss control connection from %s:%d.",
+            log_printf(LOG_ERROR, "Exceptionally loss proxy connection from %s:%d.",
                             inet_ntoa(data_control->proxy_server_addr.sin_addr), 
                             htons(data_control->proxy_server_addr.sin_port));
         }

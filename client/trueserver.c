@@ -70,7 +70,7 @@ void true_server_proxy_connected(uv_connect_t* req, int status)
         data_proxy_t* partnerdata_proxy = data_proxy->partner->data;
         partnerdata_proxy->partner = (uv_tcp_t*)req->handle;
 
-        // registe read
+        // register read
         uv_read_start((uv_stream_t*)(req->handle), allocer, true_server_proxy_read);
         uv_read_start((uv_stream_t*)(data_proxy->partner), allocer, proxy_server_proxy_read);
     }

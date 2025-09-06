@@ -18,8 +18,8 @@ void lc_statistic(void);
 
 void* lc_signal_statistic(int sig);
 void* lc_signal_detail(int sig);
-void lc_registe_statistic(int sig);
-void lc_registe_detail(int sig);
+void lc_register_statistic(int sig);
+void lc_register_detail(int sig);
 
 #ifdef malloc
 	#undef malloc

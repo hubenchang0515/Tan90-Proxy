@@ -267,13 +267,13 @@ void lc_signal_detail(int sig)
 	signal(sig, lc_signal_detail);
 }
 
-/* registe signal */
-void lc_registe_statistic(int sig)
+/* register signal */
+void lc_register_statistic(int sig)
 {
 	signal(sig, lc_signal_statistic);
 }
 
-void lc_registe_detail(int sig)
+void lc_register_detail(int sig)
 {
 	signal(sig, lc_signal_statistic);
 }

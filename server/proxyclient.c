@@ -58,6 +58,9 @@ void proxy_client_has_connection(uv_stream_t* tcp, int status)
     /* Get control connection */
     if(data_control->control == NULL) // [WARNING] Use tcp->data as connection for control
     {
+        // keepalive
+        uv_tcp_keepalive(connection, 1, 60);
+
         data_control->control = connection;
         connection->data = data_control;
         /* regist read call-back */
